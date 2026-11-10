@@ -124,6 +124,15 @@ h2.sec{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:30px 4px 10px
   -webkit-backdrop-filter:blur(24px) saturate(1.5);backdrop-filter:blur(24px) saturate(1.5);
   box-shadow:inset 0 0 0 1px var(--glass-line),var(--shadow)}
 .muted{color:var(--ink2)}
+.group{position:relative}
+.card::after,.group::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  background:linear-gradient(155deg,rgba(255,255,255,.95),rgba(255,255,255,.18) 28%,rgba(255,255,255,0) 55%,rgba(255,255,255,.35) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+html[data-theme="dark"] .card::after,html[data-theme="dark"] .group::after{
+  background:linear-gradient(155deg,rgba(255,255,255,.34),rgba(255,255,255,.07) 30%,rgba(255,255,255,0) 55%,rgba(255,255,255,.12) 100%)}
+.card,.group{background-image:linear-gradient(170deg,rgba(255,255,255,.22),rgba(255,255,255,0) 42%)}
+html[data-theme="dark"] .card,html[data-theme="dark"] .group{background-image:linear-gradient(170deg,rgba(255,255,255,.06),rgba(255,255,255,0) 45%)}
+.sheet .group{background-image:none}
 .note{margin:10px 6px 0;font-size:12.5px;line-height:1.45;color:var(--ink3)}
 .num{font-variant-numeric:tabular-nums}
 
@@ -330,7 +339,7 @@ a.btn{text-decoration:none}
 .badge:not(.got) .row-t{color:var(--ink2)}
 
 /* ---------- toast ---------- */
-.toast{position:fixed;left:16px;right:16px;bottom:calc(var(--safe-b) + 98px);z-index:50;max-width:520px;margin:0 auto;
+.toast{position:fixed;left:16px;right:16px;bottom:calc(var(--safe-b) + 86px);z-index:50;max-width:520px;margin:0 auto;
   display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;min-height:56px;border-radius:24px;
   background:var(--glass);-webkit-backdrop-filter:blur(26px) saturate(1.8);backdrop-filter:blur(26px) saturate(1.8);
   box-shadow:inset 0 0 0 1px var(--glass-line),0 12px 34px rgba(0,0,0,.18);
@@ -365,8 +374,10 @@ html[data-dg] .br-actions .btn{width:100%}
 .br-actions .btn{width:100%}
 
 /* ---------- barre d'onglets ---------- */
-.tabbar-wrap{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 16px calc(var(--safe-b) + 8px);pointer-events:none}
-.tabbar-wrap>*{pointer-events:auto;max-width:560px;margin:0 auto}
+/* comme Sport : posée plus bas, au ras de l’indicateur d’accueil */
+.tabbar-wrap{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 16px max(8px, calc(var(--safe-b) - 6px));pointer-events:none}
+.tab-row{display:flex;align-items:center;gap:10px;max-width:560px;margin:0 auto;pointer-events:auto}
+.tab-row>.seg.tabbar,.tab-row>.dg-host{flex:1;min-width:0}
 
 /* ---------- composants d'origine (repli sans glass-kit.js) ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border:0;border-radius:22px;
@@ -385,12 +396,13 @@ html[data-dg] .br-actions .btn{width:100%}
 .seg button.on{background:#fff;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 html[data-theme="dark"] .seg button.on{background:rgba(255,255,255,.2);color:#fff;box-shadow:none}
 
-.seg.tabbar{display:flex;width:100%;gap:2px;padding:5px;border-radius:32px;background:var(--glass);
+.seg.tabbar{display:flex;width:100%;gap:2px;padding:5px;border-radius:31px;background:var(--glass);
   -webkit-backdrop-filter:blur(26px) saturate(1.8);backdrop-filter:blur(26px) saturate(1.8);
   box-shadow:inset 0 0 0 1px var(--glass-line),0 10px 32px rgba(0,0,0,.14)}
-.seg.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 8px;border-radius:27px;
+.seg.tabbar button span{display:none}
+.seg.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:52px;padding:0 2px;border-radius:26px;
   font:500 11px/1 var(--font);color:var(--ink2);background:none;box-shadow:none}
-.seg.tabbar button svg{width:25px;height:25px}
+.seg.tabbar button svg{width:27px;height:27px}
 .seg.tabbar button.on{color:var(--accent);background:var(--sel)}
 
 .sw{position:relative;display:inline-block;width:51px;height:31px;flex:none}
@@ -472,11 +484,11 @@ html[data-dg] .lg-button{font-size:var(--dg-fs,16px);font-weight:var(--dg-fw,500
 html[data-dg] .lg-button:not([data-icon-only]){padding-inline:var(--dg-pad,18px)}
 .lg-button[disabled]{opacity:.5}
 html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--lg-lens-ring:rgb(255 255 255 / .14);--lg-lens-edge:rgb(255 255 255 / .06);--lg-selection-lens-edge:rgb(255 255 255 / .13);--lg-edge:rgb(255 255 255 / .05)}
-.tabbar-wrap .dg-seg{max-width:560px;margin:0 auto}
-.tabbar-wrap .dg-seg .lg-track{--lg-item-h:56px;--lg-pad:5px;--lg-item-w:0px;font-size:11px;font-weight:500;letter-spacing:0}
-.tabbar-wrap .dg-seg .lg-track__item{flex-direction:column;gap:3px;padding:0 2px}
-.tabbar-wrap .dg-seg .lg-nav__icon{display:grid;place-items:center;width:26px;height:26px}
-.tabbar-wrap .dg-seg .dg-svg,.tabbar-wrap .dg-seg .dg-svg svg{width:26px;height:26px}
+.tabbar-wrap .dg-seg .lg-track{--lg-item-h:52px;--lg-pad:5px;--lg-item-w:0px;letter-spacing:0}
+.tabbar-wrap .dg-seg .lg-track__item{padding:0 2px}
+.tabbar-wrap .dg-seg .lg-nav__icon{display:grid;place-items:center;width:28px;height:28px}
+.tabbar-wrap .dg-seg .dg-svg,.tabbar-wrap .dg-seg .dg-svg svg{width:27px;height:27px}
+.tabbar-wrap .dg-seg [aria-selected="true"] .dg-svg{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -767,7 +779,9 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 </main>
 
 <nav class="tabbar-wrap" id="tabwrap" aria-label="Navigation principale">
-  <div class="seg tabbar" id="tabbar" data-glass-full aria-label="Sections"></div>
+  <div class="tab-row">
+    <div class="seg tabbar" id="tabbar" data-glass-full aria-label="Sections"></div>
+  </div>
 </nav>
 
 <!-- toast -->
@@ -935,11 +949,19 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 (function(){
 'use strict';
 
-const APP_VERSION = '1.5.0';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.5.2';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.5.2', date:'10 novembre 2026', items:[
+    'Barre du bas : le bouton rond est retiré, la pilule d’icônes reprend toute la largeur'
+  ]},
+  { v:'1.5.1', date:'10 novembre 2026', items:[
+    'Barre du bas inspirée de Sport : icônes seules, plus basse, icône active colorée',
+    'Bouton rond « Respirer » à côté de la barre, accessible depuis tous les onglets',
+    'Plus de verre liquide : liseré lumineux et reflet sur les cartes'
+  ]},
   { v:'1.5.0', date:'10 novembre 2026', items:[
     'Bas de l’écran iPhone : la page défile désormais jusqu’au vrai bas de l’écran, sous la barre d’onglets',
     'Écrans de respiration et de verrouillage sombres jusqu’en bas'
