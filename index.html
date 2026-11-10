@@ -24,6 +24,17 @@
     d=(m==='dark'||(m==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';
   }catch(e){}
   document.documentElement.setAttribute('data-theme',d);
+  /* iOS 26/27 en mode écran d’accueil : la fenêtre peut rester plus courte que l’écran (surtout après le clavier).
+     On mesure la vraie hauteur et on recolle tout ce qui est fixé en bas sur le bas réel de l’écran. */
+  function fit(){
+    var r=document.documentElement, sa=navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+    if(!sa){ r.classList.remove('sa'); return; }
+    var land=innerWidth>innerHeight, sw=screen.width||0, sh=screen.height||0;
+    var H=land?Math.min(sw,sh):Math.max(sw,sh);
+    r.classList.add('sa'); r.style.setProperty('--H',Math.max(H,innerHeight)+'px');
+  }
+  fit(); window.__fit=fit;
+  addEventListener('resize',fit); addEventListener('orientationchange',function(){ setTimeout(fit,300); });
   var t=document.querySelector('meta[name=theme-color]'); if(t) t.setAttribute('content',d==='dark'?'#151515':'#e2ebf1');
 })();
 </script>
@@ -52,8 +63,9 @@
   --card:rgba(255,255,255,.5); --card-strong:rgba(255,255,255,.78); --hair:rgba(36,40,48,.1);
   --glass:rgba(255,255,255,.56); --glass-line:rgba(255,255,255,.78); --fill:rgba(96,104,118,.13); --sel:rgba(189,98,86,.13);
   --sheet-bg:#f1f0ec; --shadow:0 10px 30px rgba(70,60,60,.08);
-  --aura:.5;
+  --aura:.55;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --top-x:16px;   /* marge sous la barre d’état : évite le flou système d’iOS 27 */
   color-scheme:light;
 }
 html[data-theme="dark"]{
@@ -62,12 +74,12 @@ html[data-theme="dark"]{
   --card:rgba(255,255,255,.06); --card-strong:rgba(255,255,255,.12); --hair:rgba(255,255,255,.09);
   --glass:rgba(42,42,42,.58); --glass-line:rgba(255,255,255,.11); --fill:rgba(255,255,255,.1); --sel:rgba(201,109,96,.22);
   --sheet-bg:#191919; --shadow:0 10px 30px rgba(0,0,0,.35);
-  --aura:.75;
+  --aura:.7;
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:var(--bg-a);color:var(--ink);font-family:var(--font);font-size:16px;
+html,body{margin:0;height:100%;background:var(--bg-c);color:var(--ink);font-family:var(--font);font-size:16px;
   -webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;overscroll-behavior:none;touch-action:manipulation}
 html[data-theme="dark"],html[data-theme="dark"] body{background:#151515}
 body{position:fixed;inset:0;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -83,16 +95,16 @@ html[data-theme="dark"] .bg{background:radial-gradient(130% 95% at 100% 100%,#38
 html[data-theme="dark"] .bg::after{opacity:.09}
 
 /* ---------- barre du haut ---------- */
-.top{position:fixed;top:0;left:0;right:0;z-index:15;height:calc(var(--safe-t) + 56px);padding:var(--safe-t) 16px 0;
+.top{position:fixed;top:0;left:0;right:0;z-index:15;height:calc(var(--safe-t) + var(--top-x) + 56px);padding:calc(var(--safe-t) + var(--top-x)) 16px 0;
   display:flex;align-items:center;justify-content:flex-end;background:transparent;transition:background .25s,backdrop-filter .25s,box-shadow .25s}
 .top.scrolled{background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8);box-shadow:0 .5px 0 var(--hair)}
-.top-title{position:absolute;left:0;right:0;top:var(--safe-t);height:56px;display:flex;align-items:center;justify-content:center;
+.top-title{position:absolute;left:0;right:0;top:calc(var(--safe-t) + var(--top-x));height:56px;display:flex;align-items:center;justify-content:center;
   font-weight:600;font-size:17px;opacity:0;transition:opacity .2s;pointer-events:none}
 .top.scrolled .top-title{opacity:1}
 
 /* ---------- contenu ---------- */
 #scroll{position:fixed;inset:0;z-index:5;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
-  padding:calc(var(--safe-t) + 46px) 18px calc(var(--safe-b) + 128px)}
+  padding:calc(var(--safe-t) + var(--top-x) + 46px) 18px calc(var(--safe-b) + 128px)}
 .page{max-width:620px;margin:0 auto;animation:pageIn .28s ease both}
 @keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .kicker{margin:6px 2px 0;font-size:15px;color:var(--ink2)}
@@ -108,8 +120,15 @@ h2.sec{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:30px 4px 10px
 
 /* ---------- héros : le cœur ---------- */
 .hero{position:relative;width:min(74vw,290px);aspect-ratio:104/94;margin:4px auto 0}
-.hero .aura{position:absolute;inset:-18% -14% -8%;border-radius:50%;pointer-events:none;opacity:var(--aura);
-  background:radial-gradient(closest-side,rgba(244,229,136,.55),rgba(221,136,117,.22) 58%,transparent);filter:blur(26px)}
+/* halo : trois nappes de couleur qui reprennent le dégradé du cœur, fondues et qui respirent avec lui */
+.aura{position:absolute;pointer-events:none;
+  background:
+    radial-gradient(38% 30% at 50% 26%,rgba(169,197,214,.62),rgba(169,197,214,0) 100%),
+    radial-gradient(46% 34% at 50% 50%,rgba(255,241,137,.58),rgba(255,241,137,0) 100%),
+    radial-gradient(40% 32% at 50% 74%,rgba(224,117,117,.5),rgba(224,117,117,0) 100%);
+  filter:blur(34px);-webkit-filter:blur(34px);transform:translateZ(0)}
+.hero .aura{inset:-34% -30% -24%;opacity:var(--aura);animation:halo 9s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes halo{0%,100%{transform:scale(.94) translateZ(0);opacity:calc(var(--aura) * .8)}50%{transform:scale(1.06) translateZ(0);opacity:var(--aura)}}
 .heart{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 16px 26px rgba(150,90,80,.26))}
 html[data-theme="dark"] .heart{filter:drop-shadow(0 20px 34px rgba(0,0,0,.55))}
 .hero .heart{animation:breatheSoft 9s ease-in-out infinite;transform-origin:50% 55%}
@@ -127,7 +146,11 @@ html[data-theme="dark"] .heart{filter:drop-shadow(0 20px 34px rgba(0,0,0,.55))}
 .btn.big{height:54px;border-radius:27px;font-size:16px;width:100%}
 html[data-dg] .duo .btn{width:100%}
 
-/* repousser / cagnotte */
+/* repousser / spéciale / cagnotte */
+.duo2{display:flex;gap:10px;margin-top:10px}
+.duo2 .btn{flex:1;min-width:0}
+html[data-dg] .duo2 .btn{flex:1;min-width:0}
+.tag .dot.spec{background:var(--sky)}
 .btn.wide{width:100%;margin-top:10px}
 html[data-dg] .btn.wide{width:100%}
 .acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
@@ -246,7 +269,7 @@ a.btn{text-decoration:none}
 
 /* ---------- respiration (toujours sombre, comme l'icône) ---------- */
 .breathe{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;
-  padding:calc(var(--safe-t) + 12px) 24px calc(var(--safe-b) + 22px);color:#f3efe9;
+  padding:calc(var(--safe-t) + var(--top-x) + 12px) 24px calc(var(--safe-b) + 22px);color:#f3efe9;
   background:radial-gradient(130% 95% at 100% 100%,#383838 0%,#1b1b1b 48%,#0e0e0e 100%);
   opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
 .breathe.open{opacity:1;visibility:visible;transition:opacity .4s}
@@ -254,8 +277,7 @@ a.btn{text-decoration:none}
 .br-top span{font-size:15px;color:rgba(243,239,233,.55);font-variant-numeric:tabular-nums}
 .br-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:0}
 .br-heart{position:relative;width:min(68vw,300px,42vh);aspect-ratio:104/94}
-.br-heart .aura{position:absolute;inset:-25%;border-radius:50%;opacity:.8;
-  background:radial-gradient(closest-side,rgba(244,229,136,.42),rgba(221,136,117,.2) 58%,transparent);filter:blur(30px)}
+.br-heart .aura{inset:-38%;opacity:.7;transform:scale(.72)}
 .br-heart .heart{transform:scale(.72);transform-origin:50% 52%;filter:drop-shadow(0 24px 40px rgba(0,0,0,.6))}
 .breathe.run .br-heart .heart,.breathe.run .br-heart .aura{animation:breathe 10s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(.72)}50%{transform:scale(1)}}
@@ -305,10 +327,10 @@ html[data-theme="dark"] .seg button.on{background:rgba(255,255,255,.2);color:#ff
 /* ---------- feuilles (réglages, cigarette notée) ---------- */
 .sheet-back{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.32);opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}
 .sheet-back.open{opacity:1;visibility:visible;transition:opacity .35s}
-.sheet{position:fixed;left:0;right:0;bottom:0;top:calc(var(--safe-t) + 10px);z-index:31;border-radius:30px 30px 0 0;max-width:680px;margin:0 auto;
+.sheet{position:fixed;left:0;right:0;bottom:0;top:calc(var(--safe-t) + var(--top-x) + 10px);z-index:31;border-radius:30px 30px 0 0;max-width:680px;margin:0 auto;
   background:var(--sheet-bg);box-shadow:0 -10px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;
   transform:translateY(104%);visibility:hidden;transition:transform .42s cubic-bezier(.2,.85,.25,1),visibility 0s .42s}
-.sheet.mini{top:auto;max-height:calc(100% - var(--safe-t) - 20px)}
+.sheet.mini{top:auto;max-height:calc(100% - var(--safe-t) - var(--top-x) - 20px)}
 .sheet.open{transform:none;visibility:visible;transition:transform .42s cubic-bezier(.2,.85,.25,1)}
 .sheet:focus{outline:none}
 .sheet.drag{transition:none}
@@ -334,8 +356,14 @@ html[data-theme="dark"] .seg button.on{background:rgba(255,255,255,.2);color:#ff
 .banner b{display:block;font-size:15px;font-weight:600}
 .banner span{font-size:13px;color:var(--ink2)}
 
+/* mode app iOS : on recolle sur le bas réel de l’écran (--H mesurée au démarrage) */
+html.sa,html.sa body{height:auto}
+html.sa body,html.sa .bg,html.sa #scroll,html.sa .sheet-back,html.sa .breathe,html.sa .tabbar-wrap,html.sa .sheet{bottom:calc(100% - var(--H))}
+html.sa .toast{bottom:calc(100% - var(--H) + var(--safe-b) + 98px)}
+html.sa .sheet.mini{max-height:calc(var(--H) - var(--safe-t) - var(--top-x) - 20px)}
+
 @media (prefers-reduced-motion:reduce){
-  .page{animation:none}.hero .heart{animation:none}
+  .page{animation:none}.hero .heart,.hero .aura{animation:none}
   .breathe.run .br-heart .heart,.breathe.run .br-heart .aura{animation:none}
   .br-heart .heart{transform:scale(.9)}
   .sheet,.sheet-back,.toast,.breathe{transition:none!important}
@@ -369,17 +397,19 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 <!-- dégradés partagés (cœur, graphique) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
-    <linearGradient id="gHeart" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#a6c3d6"/><stop offset=".2" stop-color="#b1c7c6"/><stop offset=".33" stop-color="#c4d2b1"/>
-      <stop offset=".45" stop-color="#e6e094"/><stop offset=".52" stop-color="#f4e588"/><stop offset=".58" stop-color="#f3d285"/>
-      <stop offset=".65" stop-color="#edba81"/><stop offset=".72" stop-color="#e6a17a"/><stop offset=".82" stop-color="#dd8875"/>
-      <stop offset=".91" stop-color="#c87c66"/><stop offset="1" stop-color="#b07060"/>
-    </linearGradient>
+    <!-- radial Figma : centre en haut au milieu ; couleurs telles que rendues par l'effet verre de l'icône -->
+    <radialGradient id="gHeart" cx=".5" cy="0" r="1" fx=".5" fy="0">
+      <stop offset="0" stop-color="#a6c3da"/><stop offset=".11" stop-color="#a9c5d6"/><stop offset=".23" stop-color="#b1c7c5"/>
+      <stop offset=".34" stop-color="#b8ccc1"/><stop offset=".42" stop-color="#d0d7a8"/><stop offset=".51" stop-color="#f3e78c"/>
+      <stop offset=".57" stop-color="#f3da87"/><stop offset=".63" stop-color="#f0c983"/><stop offset=".69" stop-color="#eaad7d"/>
+      <stop offset=".74" stop-color="#e39378"/><stop offset=".83" stop-color="#d98b72"/><stop offset=".91" stop-color="#c47c66"/>
+      <stop offset=".97" stop-color="#ae6858"/><stop offset="1" stop-color="#a45d50"/>
+    </radialGradient>
     <radialGradient id="gShine" cx=".3" cy=".16" r=".6">
       <stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".55" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="gShade" x1="0" y1="0" x2="0" y2="1">
-      <stop offset=".6" stop-color="#5a2a24" stop-opacity="0"/><stop offset="1" stop-color="#5a2a24" stop-opacity=".16"/>
+      <stop offset=".7" stop-color="#320c0c" stop-opacity="0"/><stop offset="1" stop-color="#320c0c" stop-opacity=".14"/>
     </linearGradient>
     <path id="heartPath" d="M50 89.4L7.82 46.42A27.3 27.3 0 1 1 50 12.13A27.3 27.3 0 1 1 92.18 46.42Z"/>
   </defs>
@@ -390,7 +420,7 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 <header class="top" id="top">
   <div class="top-title" id="topTitle"></div>
   <button class="btn ib" id="btnSettings" data-glass-icon aria-label="Réglages">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h7.5M17.5 7H20M4 12h2.5M12.5 12H20M4 17h10.5M19.5 17H20"/><circle cx="14.5" cy="7" r="2.5"/><circle cx="9.5" cy="12" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="translate(12 12) scale(1.22) translate(-12 -10.5)" stroke-width="1.5"><path d="M10.4 3.4a1.6 1.6 0 0 1 3.2 0l.2 1.2a7.6 7.6 0 0 1 1.9 1.1l1.1-.4a1.6 1.6 0 0 1 2 .7 1.6 1.6 0 0 1-.4 2.1l-.9.8a7.6 7.6 0 0 1 0 2.2l.9.8a1.6 1.6 0 0 1 .4 2.1 1.6 1.6 0 0 1-2 .7l-1.1-.4a7.6 7.6 0 0 1-1.9 1.1l-.2 1.2a1.6 1.6 0 0 1-3.2 0l-.2-1.2a7.6 7.6 0 0 1-1.9-1.1l-1.1.4a1.6 1.6 0 0 1-2-.7 1.6 1.6 0 0 1 .4-2.1l.9-.8a7.6 7.6 0 0 1 0-2.2l-.9-.8a1.6 1.6 0 0 1-.4-2.1 1.6 1.6 0 0 1 2-.7l1.1.4a7.6 7.6 0 0 1 1.9-1.1Z"/><circle cx="12" cy="10.5" r="2.6"/></g></svg>
   </button>
 </header>
 
@@ -426,7 +456,10 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
       <button class="btn primary big" id="btnCraving">J’ai une envie</button>
       <button class="btn big" id="btnSmoke">J’en fume une</button>
     </div>
-    <button class="btn wide" id="btnDelay">Repousser de 10 minutes</button>
+    <div class="duo2" id="duo2">
+      <button class="btn" id="btnDelay">Repousser 10 min</button>
+      <button class="btn" id="btnSpecial">Une spéciale</button>
+    </div>
 
     <div class="card delay" id="delayCard" hidden aria-live="polite">
       <div class="since-l" id="delayL">Prochaine cigarette repoussée</div>
@@ -561,6 +594,14 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
         <div class="row-l"><div class="row-t">Baisser chaque semaine</div><div class="row-s">Une cigarette de moins par jour, chaque semaine</div></div>
         <span class="sw"><input type="checkbox" id="swStep" aria-label="Baisser chaque semaine"><i></i></span>
       </div>
+      <div class="row" id="rowWeekSw">
+        <div class="row-l"><div class="row-t">Maximum par semaine</div><div class="row-s">Pratique si tu fumes peu : la semaine lisse les jours plus chargés</div></div>
+        <span class="sw"><input type="checkbox" id="swWeek" aria-label="Maximum par semaine"><i></i></span>
+      </div>
+      <div class="row" id="rowWeek">
+        <div class="row-l"><div class="row-t">Par semaine</div><div class="row-s" id="weekInfo"></div></div>
+        <div class="stepper"><button class="btn ib" data-k="weekMax" data-d="-1" data-glass-icon aria-label="Une de moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><span class="stv" id="vWeek">14</span><button class="btn ib" data-k="weekMax" data-d="1" data-glass-icon aria-label="Une de plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div>
+      </div>
       <div class="row" id="rowQuit">
         <div class="row-l"><div class="row-t">Date d’arrêt</div><div class="row-s" id="quitInfo"></div></div>
         <input class="inp date" type="date" id="quitDate" aria-label="Date d’arrêt">
@@ -581,6 +622,23 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
       <div class="row">
         <div class="row-l"><div class="row-t">Cigarettes par paquet</div></div>
         <div class="stepper"><button class="btn ib" data-k="perPack" data-d="-1" data-glass-icon aria-label="Une de moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><span class="stv" id="vPerPack">20</span><button class="btn ib" data-k="perPack" data-d="1" data-glass-icon aria-label="Une de plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div>
+      </div>
+    </div>
+
+    <h2 class="sec">Cigarettes spéciales</h2>
+    <p class="sec-sub">Pour ta consommation à part. Elles ont leur propre compteur et n’entrent ni dans ton objectif, ni dans tes économies.</p>
+    <div class="group">
+      <div class="row">
+        <div class="row-l"><div class="row-t">Bouton sur Aujourd’hui</div><div class="row-s">Noter une spéciale en un geste</div></div>
+        <span class="sw"><input type="checkbox" id="swSpec" aria-label="Bouton spéciale sur Aujourd’hui"><i></i></span>
+      </div>
+      <div class="row">
+        <div class="row-l"><div class="row-t">Maximum par semaine</div><div class="row-s" id="specInfo"></div></div>
+        <div class="stepper"><button class="btn ib" data-k="specMax" data-d="-1" data-glass-icon aria-label="Une de moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><span class="stv" id="vSpec">3</span><button class="btn ib" data-k="specMax" data-d="1" data-glass-icon aria-label="Une de plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div>
+      </div>
+      <div class="row">
+        <div class="row-l"><div class="row-t">Compter pour les bienfaits</div><div class="row-s">La fumée compte aussi pour la récupération de ton corps</div></div>
+        <span class="sw"><input type="checkbox" id="swSpecH" aria-label="Compter les spéciales pour les bienfaits"><i></i></span>
       </div>
     </div>
 
@@ -707,11 +765,25 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 (function(){
 'use strict';
 
-const APP_VERSION = '1.1.0';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.2.0';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.2.0', date:'10 novembre 2026', items:[
+    'Maximum par semaine, remis à zéro chaque lundi, en plus du maximum par jour',
+    'Cigarettes spéciales : un compteur à part, avec son maximum hebdo, hors objectif et hors économies',
+    'Cœur : dégradé radial fidèle à l’icône, halo plus doux qui respire avec lui',
+    'Nouvelle icône pour les Bienfaits',
+    'Réglages par défaut pensés pour 2 à 3 cigarettes par jour'
+  ]},
+  { v:'1.1.1', date:'10 novembre 2026', items:[
+    'iPhone : le bas de l’écran n’est plus coupé (bug d’iOS 26/27, surtout après le clavier)',
+    'Haut de l’écran décalé pour sortir du flou ajouté par iOS 27',
+    'Écran de respiration : la barre d’état passe en sombre',
+    'Nouvelles icônes pour les Réglages et les Bienfaits',
+    'Ton maximum par jour ne peut plus dépasser ta consommation d’avant'
+  ]},
   { v:'1.1.0', date:'10 novembre 2026', items:[
     'Repousser de 10 minutes : un minuteur pour espacer la prochaine cigarette, et chaque report réussi est compté',
     'La cagnotte : l’argent économisé, un objectif pour te faire plaisir, et la liste de ce que tu t’es déjà offert',
@@ -775,7 +847,9 @@ const MSG = {
     'Tu fumes moins qu’avant ? C’est une victoire, même petite.',
     'La cigarette ne calme pas vraiment le stress : elle soulage surtout le manque qu’elle a créé.',
     'Chaque jour sous ton objectif renforce la nouvelle habitude.',
-    'Pas prêt à dire non ? Dis « plus tard » : repousser de 10 minutes, c’est déjà gagner.'
+    'Pas prêt à dire non ? Dis « plus tard » : repousser de 10 minutes, c’est déjà gagner.',
+    'À deux ou trois par jour, chaque cigarette est un rituel : change le décor, et l’envie perd ses repères.',
+    'Fumer peu protège moins qu’on le croit : c’est surtout l’arrêt complet qui soulage le cœur.'
   ],
   logUnder: [
     'C’est noté. Il t’en reste {n} pour aujourd’hui.',
@@ -813,7 +887,7 @@ const SVG = (p, sw)=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 const ICONS = {
   heart: SVG('<path d="M12 20 4.2 12.2a4.6 4.6 0 0 1 6.5-6.5L12 7l1.3-1.3a4.6 4.6 0 0 1 6.5 6.5Z"/>'),
   chart: SVG('<path d="M5 20V12M10 20V6M15 20v-9M20 20V9"/>'),
-  lungs: SVG('<path d="M12 4v7.5M12 11.5c-.8 0-1.6.6-2 1.3M12 11.5c.8 0 1.6.6 2 1.3"/><path d="M9.8 7.6C7.3 7.4 4.5 11 4.5 15.6c0 2.3 1.2 3.9 3.2 3.9 1.6 0 2.3-1 2.3-2.6V9.6c0-1-.1-1.9-.2-2Z"/><path d="M14.2 7.6c2.5-.2 5.3 3.4 5.3 8 0 2.3-1.2 3.9-3.2 3.9-1.6 0-2.3-1-2.3-2.6V9.6c0-1 .1-1.9.2-2Z"/>'),
+  wind:  SVG('<path d="M3.5 9h10.3a2.9 2.9 0 1 0-2.7-3.9"/><path d="M3.5 13h14.6a2.9 2.9 0 1 1-2.7 3.9"/><path d="M3.5 17h6.5"/>'),
   flag:  SVG('<path d="M6 21V4M6 4.5c4-2 8 2 12 0v9c-4 2-8-2-12 0"/>'),
   check: SVG('<path d="m5 12.5 4.2 4.2L19 7"/>', 2.4),
   lock:  SVG('<rect x="5.5" y="10.5" width="13" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>'),
@@ -825,7 +899,7 @@ const ICONS = {
 const TABS = [
   { id:'today',    label:'Aujourd’hui', icon:ICONS.heart },
   { id:'progress', label:'Progrès',     icon:ICONS.chart },
-  { id:'health',   label:'Bienfaits',   icon:ICONS.lungs },
+  { id:'health',   label:'Bienfaits',   icon:ICONS.wind },
   { id:'plan',     label:'Plan',        icon:ICONS.flag }
 ];
 
@@ -856,6 +930,8 @@ function dayStart(ts){ const d = new Date(ts); d.setHours(0,0,0,0); return d.get
 function keyTs(k){ const p = k.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]).getTime(); }
 function addDays(ts, n){ const d = new Date(ts); d.setDate(d.getDate() + n); return d.getTime(); }
 function daysBetween(a, b){ return Math.round((keyTs(b) - keyTs(a)) / DAY); }
+function weekStart(ts){ const d = dayStart(ts); return addDays(d, -((new Date(d).getDay() + 6) % 7)); }   // lundi
+function countIn(arr, a, z){ let n = 0; for (const t of arr) if (t >= a && t < z) n++; return n; }
 function fmtDay(ts, opts){ return new Date(ts).toLocaleDateString('fr-FR', opts || { day:'numeric', month:'long' }); }
 function fmtTime(ts){ const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 function fmtDur(ms){
@@ -893,8 +969,8 @@ function haptic(){ try { if (navigator.vibrate) navigator.vibrate(12); } catch(e
 /* ---------- données ---------- */
 function defData(){
   return { v:1, since:Date.now(), onboarded:false, logs:[], cravings:[],
-    plan:{ mode:'reduce', limit:8, autoStep:false, stepFrom:dayKey(Date.now()), quitDate:'' },
-    base:{ perDay:10, price:13, perPack:20 }, reasons:[], lim:{}, delays:[], delay:null, goal:null, spent:0, treats:[] };
+    plan:{ mode:'reduce', limit:2, autoStep:false, stepFrom:dayKey(Date.now()), quitDate:'', weekOn:true, weekMax:14 },
+    base:{ perDay:3, price:13, perPack:20 }, spec:{ on:true, max:3, health:true }, specials:[], reasons:[], lim:{}, delays:[], delay:null, goal:null, spent:0, treats:[] };
 }
 function sanitize(raw){
   const d = defData();
@@ -912,6 +988,11 @@ function sanitize(raw){
   if (raw.goal && typeof raw.goal.name === 'string' && +raw.goal.amount > 0) d.goal = { name:raw.goal.name.slice(0, 60), amount:clamp(+raw.goal.amount, 1, 100000) };
   if (Number.isFinite(+raw.spent)) d.spent = Math.max(0, +raw.spent);
   if (Array.isArray(raw.treats)) d.treats = raw.treats.filter(x=>x && typeof x.name === 'string' && +x.amount > 0 && Number.isFinite(x.t)).map(x=>({ name:x.name.slice(0, 60), amount:+x.amount, t:x.t }));
+  if (Array.isArray(raw.specials)) d.specials = raw.specials.filter(Number.isFinite).sort((a,b)=>a - b);
+  if (raw.spec && typeof raw.spec === 'object') d.spec = { on:raw.spec.on !== false, max:clamp(raw.spec.max|0, 0, 50), health:raw.spec.health !== false };
+  if (!raw.plan || raw.plan.weekMax == null){ d.plan.weekOn = true; d.plan.weekMax = Math.max(1, Math.min(d.plan.limit|0 || 2, (raw.base && raw.base.perDay)|0 || 3)) * 7; }
+  d.plan.weekOn = d.plan.weekOn !== false;
+  d.plan.weekMax = clamp(d.plan.weekMax|0, 0, 400);
   d.plan.mode = d.plan.mode === 'quit' ? 'quit' : 'reduce';
   d.plan.limit = clamp(d.plan.limit|0, 0, 60);
   d.base.perDay = clamp(d.base.perDay|0, 1, 80);
@@ -946,7 +1027,8 @@ function stats(){
   }
   avoided = Math.floor(avoided);
   /* pauses */
-  const times = D.logs.map(l=>l.t);
+  let times = D.logs.map(l=>l.t);
+  if (D.spec.health && D.specials.length) times = times.concat(D.specials).sort((a,b)=>a - b);   // la fumée compte pour le corps
   const last = times.length ? times[times.length - 1] : null;
   const gapStart = last != null ? last : D.since;
   let record = 0, prev = D.since;
@@ -962,7 +1044,13 @@ function stats(){
     if (streakOpen){ if (ok) streak++; else streakOpen = false; }
     k = dayKey(addDays(keyTs(k), -1));
   }
-  return { now, counts, todayK, nToday:counts[todayK] || 0, limit:limitFor(todayK), avoided,
+  /* semaine en cours (lundi → dimanche) et semaines terminées sous le maximum */
+  const ws = weekStart(now), we = addDays(ws, 7), logT = D.logs.map(l=>l.t);
+  const nWeek = countIn(logT, ws, we), specWeek = countIn(D.specials, ws, we);
+  let weeksUnder = 0, w = addDays(ws, -7), g3 = 0;
+  while (addDays(w, 7) > D.since && g3++ < 600){ if (countIn(logT, w, addDays(w, 7)) <= D.plan.weekMax) weeksUnder++; w = addDays(w, -7); }
+  return { now, counts, todayK, nToday:counts[todayK] || 0, limit:limitFor(todayK), avoided, nWeek, specWeek, weeksUnder, weekEnd:we,
+    specToday:countIn(D.specials, dayStart(now), addDays(dayStart(now), 1)), specials:D.specials.length,
     saved: avoided * b.price / b.perPack, lifeMin: avoided * LIFE_MIN, cravings:D.cravings.length, delays:D.delays.length, treats:D.treats.length,
     last, gap, record, under, streak, total:D.logs.length,
     daysUsed: Math.max(1, daysBetween(startK, todayK) + 1) };
@@ -1047,6 +1135,10 @@ function renderToday(st){
     else if (left === 0) sub = 'Objectif du jour atteint : ' + lim + ' sur ' + lim + '. Tiens bon jusqu’à demain.';
     else sub = 'Objectif dépassé de ' + (-left) + '. Demain repart de zéro.';
     if (beforeQuit){ const j = daysBetween(st.todayK, p.quitDate); sub += ' Arrêt dans ' + j + ' ' + pl(j, 'jour', 'jours') + '.'; }
+    if (p.weekOn){
+      const wm = p.weekMax, wl = wm - st.nWeek;
+      sub += wl >= 0 ? ' Cette semaine : ' + st.nWeek + ' sur ' + wm + '.' : ' Cette semaine : ' + st.nWeek + ' sur ' + wm + ', au-dessus de ton maximum.';
+    }
   }
   setText($('heroN'), N); setText($('heroL'), L); setText($('heroSub'), sub);
   /* budget en pastilles */
@@ -1058,7 +1150,7 @@ function renderToday(st){
   setHTML($('budget'), h);
 
   /* depuis la dernière */
-  setText($('sinceL'), st.last != null ? 'Depuis ta dernière cigarette' : 'Sans cigarette notée depuis');
+  setText($('sinceL'), st.last == null ? 'Sans cigarette notée depuis' : D.specials.indexOf(st.last) >= 0 && !D.logs.some(l=>l.t === st.last) ? 'Depuis ta dernière spéciale' : 'Depuis ta dernière cigarette');
   setText($('sinceT'), fmtDur(st.gap));
   let ss;
   if (st.last == null) ss = 'Note chaque cigarette pour suivre tes pauses.';
@@ -1078,6 +1170,7 @@ function renderToday(st){
   let q = pick(MSG.day, seed);
   if (D.reasons.length && seed % 3 === 0) q = 'Pense à pourquoi tu fais ça : « ' + pick(D.reasons, seed) + ' ».';
   setText($('quote'), q);
+  setHidden($('btnSpecial'), !D.spec.on);
   renderDelay();
 
   /* journée */
@@ -1085,10 +1178,11 @@ function renderToday(st){
   D.logs.forEach((l, i)=>{ if (l.t >= t0) items.push({ t:l.t, kind:'log', i, k:l.k }); });
   D.cravings.forEach((t, i)=>{ if (t >= t0) items.push({ t, kind:'win', i }); });
   D.delays.forEach((t, i)=>{ if (t >= t0) items.push({ t, kind:'delay', i }); });
+  D.specials.forEach((t, i)=>{ if (t >= t0) items.push({ t, kind:'spec', i }); });
   items.sort((a,b)=>b.t - a.t);
   setHTML($('todayList'), items.length ? items.map(it=>
-    '<div class="row"><span class="time">' + fmtTime(it.t) + '</span><div class="row-l"><span class="tag"><span class="dot' + (it.kind !== 'log' ? ' win' : '') + '"></span>' +
-    (it.kind === 'win' ? 'Envie surmontée' : it.kind === 'delay' ? 'Cigarette repoussée de 10 min' : (it.k ? 'Cigarette, ' + TRIG_L[it.k].toLowerCase() : 'Cigarette')) + '</span></div>' +
+    '<div class="row"><span class="time">' + fmtTime(it.t) + '</span><div class="row-l"><span class="tag"><span class="dot' + (it.kind === 'spec' ? ' spec' : it.kind !== 'log' ? ' win' : '') + '"></span>' +
+    (it.kind === 'win' ? 'Envie surmontée' : it.kind === 'delay' ? 'Cigarette repoussée de 10 min' : it.kind === 'spec' ? 'Spéciale' : (it.k ? 'Cigarette, ' + TRIG_L[it.k].toLowerCase() : 'Cigarette')) + '</span></div>' +
     '<button class="x" data-del="' + it.kind + ':' + it.t + '" aria-label="Supprimer">' + ICONS.x + '</button></div>').join('')
     : '<div class="row empty-row">Rien de noté pour l’instant. Quand une envie arrive, touche « J’ai une envie » : on respire ensemble.</div>');
 }
@@ -1118,7 +1212,9 @@ function renderProgress(st){
     ['Argent économisé', fmtEur(st.saved), 'Paquet à ' + fmtEur(D.base.price)],
     ['Temps de vie préservé', fmtLife(st.lifeMin), 'Estimation'],
     ['Envies surmontées', fmtInt(st.cravings), st.cravings ? 'Autant de fois où l’envie est passée' : 'Touche « J’ai une envie » quand ça arrive'],
-    ['Cigarettes repoussées', fmtInt(st.delays), st.delays ? 'Dix minutes tenues à chaque fois' : 'Touche « Repousser de 10 minutes » sur Aujourd’hui'],
+    ['Cette semaine', st.nWeek + (D.plan.weekOn ? ' / ' + D.plan.weekMax : ''), 'Du lundi ' + fmtDay(weekStart(st.now)) + ' à aujourd’hui'],
+    ['Spéciales cette semaine', st.specWeek + (D.spec.max ? ' / ' + D.spec.max : ''), st.specials ? 'En moyenne ' + fmtDec(countIn(D.specials, addDays(weekStart(st.now), -28), weekStart(st.now)) / 4) + ' par semaine sur les 4 dernières' : 'Hors objectif et hors économies'],
+    ['Cigarettes repoussées', fmtInt(st.delays), st.delays ? 'Dix minutes tenues à chaque fois' : 'Touche « Repousser 10 min » sur Aujourd’hui'],
     ['Jours sous l’objectif', fmtInt(st.under), st.streak ? 'Série en cours : ' + st.streak + ' ' + pl(st.streak, 'jour', 'jours') : 'Les jours se comptent une fois terminés'],
     ['Plus longue pause', fmtDur(st.record), '']
   ];
@@ -1201,7 +1297,7 @@ function renderHealth(st){
     'Une envie de fumer passe en général en <b>quelques minutes</b>, que tu fumes ou non. Respirer t’aide à la laisser passer.',
     'La cigarette ne calme pas vraiment le stress : elle soulage surtout <b>le manque de nicotine</b> qu’elle a elle-même créé.',
     'Les <b>substituts nicotiniques</b> (patch, gomme, pastille) augmentent nettement les chances de réussite et sont remboursés sur prescription.',
-    'Réduire est un bon début, mais même quelques cigarettes par jour restent nocives pour le cœur : <b>l’arrêt complet</b> est ce qui protège le plus.'
+    'Fumer peu n’est pas fumer sans risque : <b>une seule cigarette par jour</b> garde environ la moitié du risque cardiaque d’un paquet par jour (BMJ, 2018). <b>L’arrêt complet</b> est ce qui protège le plus.'
   ];
   setHTML($('args'), args.map(a=>'<div class="arg">' + a + '</div>').join(''));
 }
@@ -1221,6 +1317,7 @@ const BADGES = [
   { t:'200 € économisés',              s:'Une belle somme pour te faire plaisir',     ok:(st)=>st.saved >= 200 },
   { t:'10 cigarettes repoussées',      s:'Dix fois dix minutes de gagnées',          ok:(st)=>st.delays >= 10 },
   { t:'Un cadeau grâce à la cagnotte', s:'Offre-toi ton premier objectif',           ok:(st)=>st.treats >= 1 },
+  { t:'Une semaine sous ton maximum', s:'Termine une semaine sous ton maximum hebdo', ok:(st)=>st.weeksUnder >= 1 },
   { t:'Un mois sans fumer',            s:'30 jours sans cigarette',                  ok:(st)=>st.record >= 30 * DAY }
 ];
 const modeSeg = $('modeSeg'), swStep = $('swStep'), priceInp = $('price'), quitInp = $('quitDate');
@@ -1234,6 +1331,14 @@ function renderPlan(st){
   setText($('vLimit'), String(curLim));
   setChecked(swStep, p.autoStep);
   setHidden($('rowLimit'), started); setHidden($('rowStep'), started);
+  setHidden($('rowWeekSw'), started); setHidden($('rowWeek'), started || !p.weekOn);
+  setChecked($('swWeek'), p.weekOn);
+  setText($('vWeek'), String(p.weekMax));
+  const wl = p.weekMax - st.nWeek;
+  setText($('weekInfo'), 'Cette semaine : ' + st.nWeek + ' sur ' + p.weekMax + (wl > 0 ? ', il t’en reste ' + wl : wl === 0 ? ', maximum atteint' : ', dépassé de ' + (-wl)) + '. Remise à zéro le lundi.');
+  setChecked($('swSpec'), D.spec.on); setChecked($('swSpecH'), D.spec.health);
+  setText($('vSpec'), String(D.spec.max));
+  setText($('specInfo'), D.spec.max ? 'Cette semaine : ' + st.specWeek + ' sur ' + D.spec.max : 'Aucune limite fixée. Cette semaine : ' + st.specWeek);
   let li = 'Aujourd’hui : ' + curLim;
   if (p.autoStep){ const nextK = dayKey(addDays(keyTs(p.stepFrom), (Math.floor(daysBetween(p.stepFrom, st.todayK) / 7) + 1) * 7));
     if (curLim > 0) li += '. À partir du ' + fmtDay(keyTs(nextK)) + ' : ' + Math.max(0, curLim - 1); }
@@ -1314,6 +1419,12 @@ function logSmoke(){
   else if (n < lim) m = pick(MSG.logUnder).replace('{n}', lim - n);
   else if (n === lim) m = pick(MSG.logLast);
   else m = pick(MSG.logOver);
+  if (!quitting && p.weekOn){
+    const nw = st0.nWeek + 1, wm = p.weekMax;
+    if (nw > wm) m = 'Au-dessus de ton maximum de la semaine (' + nw + ' sur ' + wm + '). Pas de culpabilité : lundi, compteur à zéro.';
+    else if (nw === wm) m = 'C’était la dernière de ta semaine (' + wm + ' sur ' + wm + '). Tu peux tenir jusqu’à lundi.';
+    else if (n <= lim) m += ' Semaine : ' + nw + ' sur ' + wm + '.';
+  }
   setText($('logMsg'), m);
   for (const c of trigChips.children) setOn(c, false);
   render();
@@ -1375,6 +1486,17 @@ $('btnDelayMore').addEventListener('click', startDelay);
 $('btnDelayDone').addEventListener('click', ()=>{ D.delay = null; saveD(); renderDelay(); });
 $('btnDelayStop').addEventListener('click', ()=>{ D.delay = null; saveD(); renderDelay(); });
 $('btnDelaySmoke').addEventListener('click', ()=>{ D.delay = null; saveD(); renderDelay(); logSmoke(); });
+
+/* ---------- cigarette spéciale ---------- */
+function logSpecial(){
+  const t = Date.now(); D.specials.push(t); D.specials.sort((a,b)=>a - b); saveD(); haptic();
+  const st = stats(), mx = D.spec.max, n = st.specWeek;
+  let m = 'Spéciale notée.';
+  if (mx > 0) m += n < mx ? ' Cette semaine : ' + n + ' sur ' + mx + '.' : n === mx ? ' Tu atteins ton maximum de la semaine (' + mx + ').' : ' Au-dessus de ton maximum de la semaine : ' + n + ' sur ' + mx + '.';
+  render();
+  toast(m, ()=>{ const i = D.specials.indexOf(t); if (i >= 0) D.specials.splice(i, 1); saveD(); render(); });
+}
+$('btnSpecial').addEventListener('click', logSpecial);
 
 /* ---------- cagnotte ---------- */
 let goalEditing = false;
@@ -1445,6 +1567,10 @@ $('todayList').addEventListener('click', (e)=>{
     const i = D.logs.findIndex(l=>l.t === t); if (i < 0) return;
     const [rm] = D.logs.splice(i, 1); saveD(); render();
     toast('Cigarette supprimée.', ()=>{ D.logs.push(rm); D.logs.sort((a,b)=>a.t - b.t); saveD(); render(); });
+  } else if (kind === 'spec') {
+    const i = D.specials.indexOf(t); if (i < 0) return;
+    D.specials.splice(i, 1); saveD(); render();
+    toast('Spéciale supprimée.', ()=>{ D.specials.push(t); D.specials.sort((a,b)=>a - b); saveD(); render(); });
   } else if (kind === 'delay') {
     const i = D.delays.indexOf(t); if (i < 0) return;
     D.delays.splice(i, 1); saveD(); render();
@@ -1460,12 +1586,13 @@ $('todayList').addEventListener('click', (e)=>{
 const BR_TOTAL = 180000, BR_CYCLE = 10000;
 const br = $('breathe');
 let brT0 = 0, brTimer = null;
-const brSheet = makeSheet(br, null, null, ()=>{ br.classList.remove('run'); clearInterval(brTimer); brTimer = null; });
+const brSheet = makeSheet(br, null, null, ()=>{ br.classList.remove('run'); clearInterval(brTimer); brTimer = null; applyTheme(); });
 function openBreathe(){
   const pool = D.reasons.length ? D.reasons.map(r=>'Rappelle-toi : ' + r.charAt(0).toLowerCase() + r.slice(1) + (/[.!?…]$/.test(r) ? '' : '.')) : MSG.day.slice(0, 6);
   setText($('brReason'), pick(pool));
   setText($('brHint'), 'Suis le cœur : il gonfle, tu inspires. Il dégonfle, tu expires.');
   brSheet.set(true);
+  const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.setAttribute('content', '#121212');
   br.classList.remove('run'); void br.offsetWidth; br.classList.add('run');   // relance l’animation au début du cycle
   brT0 = Date.now(); tickBreathe();
   clearInterval(brTimer); brTimer = setInterval(tickBreathe, 200);
@@ -1527,10 +1654,19 @@ $('page-plan').addEventListener('click', (e)=>{
   const k = b.dataset.k, d = +b.dataset.d;
   if (k === 'limit'){ const tk = dayKey(Date.now()), cur = D.plan.mode === 'quit' ? D.plan.limit : limitFor(tk);
     D.plan.limit = clamp(cur + d, 0, 60); D.plan.stepFrom = tk; }
-  else if (k === 'perDay') D.base.perDay = clamp(D.base.perDay + d, 1, 80);
+  else if (k === 'perDay'){
+    D.base.perDay = clamp(D.base.perDay + d, 1, 80);
+    const tk = dayKey(Date.now());   // un objectif au-dessus de ta consommation d’avant n’a pas de sens
+    if (limitFor(tk) > D.base.perDay){ D.plan.limit = D.base.perDay; D.plan.stepFrom = tk; }
+  }
   else if (k === 'perPack') D.base.perPack = clamp(D.base.perPack + d, 10, 50);
+  else if (k === 'weekMax') D.plan.weekMax = clamp(D.plan.weekMax + d, 0, 400);
+  else if (k === 'specMax') D.spec.max = clamp(D.spec.max + d, 0, 50);
   haptic(); touchPlan();
 });
+$('swWeek').addEventListener('change', ()=>{ D.plan.weekOn = $('swWeek').checked; touchPlan(); });
+$('swSpec').addEventListener('change', ()=>{ D.spec.on = $('swSpec').checked; touchPlan(); });
+$('swSpecH').addEventListener('change', ()=>{ D.spec.health = $('swSpecH').checked; touchPlan(); });
 swStep.addEventListener('change', ()=>{ const tk = dayKey(Date.now()); D.plan.limit = limitFor(tk); D.plan.autoStep = swStep.checked; D.plan.stepFrom = tk; touchPlan(); });
 quitInp.addEventListener('change', ()=>{ D.plan.quitDate = quitInp.value || ''; touchPlan(); });
 priceInp.addEventListener('change', ()=>{
@@ -1555,7 +1691,7 @@ function syncSettingsUI(){
   themeBtns.forEach(b=>setOn(b, b.dataset.v === S.theme));
   setChecked(swGlass, S.glass !== false);
   setChecked(swAuto, S.autoUpdate !== false);
-  setText($('dataInfo'), D.logs.length + ' ' + pl(D.logs.length, 'cigarette notée', 'cigarettes notées') + ', ' + D.cravings.length + ' ' + pl(D.cravings.length, 'envie surmontée', 'envies surmontées') + ', depuis le ' + fmtDay(D.since) + '.');
+  setText($('dataInfo'), D.logs.length + ' ' + pl(D.logs.length, 'cigarette notée', 'cigarettes notées') + ', ' + D.specials.length + ' ' + pl(D.specials.length, 'spéciale', 'spéciales') + ', ' + D.cravings.length + ' ' + pl(D.cravings.length, 'envie surmontée', 'envies surmontées') + ', depuis le ' + fmtDay(D.since) + '.');
 }
 themeSeg.addEventListener('click', (e)=>{
   const b = e.target.closest('button'); if (!b || !themeSeg.contains(b)) return;
@@ -1668,6 +1804,17 @@ $('changelog').innerHTML = CHANGELOG.map(c =>
   '<div class="row cl"><div class="cl-h"><b>v' + c.v + '</b><span>' + c.date + '</span></div><ul>' +
   c.items.map(x=>'<li>' + x + '</li>').join('') + '</ul></div>').join('');
 setText($('verNow'), APP_VERSION); setText($('verAbout'), 'v' + APP_VERSION);
+
+/* ---------- clavier iOS : à la fermeture, la page peut rester décalée (iOS 26/27) ---------- */
+document.addEventListener('focusout', (e)=>{
+  if (!e.target || !e.target.matches || !e.target.matches('input')) return;
+  setTimeout(()=>{
+    if (document.activeElement && document.activeElement.matches && document.activeElement.matches('input')) return;
+    try { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; } catch(err){}
+    if (window.__fit) window.__fit();
+  }, 80);
+});
+if (window.visualViewport) visualViewport.addEventListener('resize', ()=>{ if (window.__fit) window.__fit(); });
 
 /* ---------- démarrage ---------- */
 applyTheme();
