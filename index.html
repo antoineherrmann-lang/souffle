@@ -24,32 +24,18 @@
     d=(m==='dark'||(m==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';
   }catch(e){}
   document.documentElement.setAttribute('data-theme',d);
-  /* iOS 26/27 en mode écran d’accueil : la zone des éléments fixés peut rester plus courte que l’écran (souvent après le clavier).
-     On mesure : hauteur de l’écran, fenêtre, zone réelle des éléments fixés (#vpProbe), et on recolle le bas sur le bas réel. */
-  var fixMode='auto'; try{ fixMode=(JSON.parse(localStorage.getItem('souffle.settings')||'{}').fix)||'auto'; }catch(e){}
-  var lastNudge=0;
+  /* iOS 27 en mode app : la vue web peut être plus courte que l’écran ; la bande du bas n’est pas dessinable par la page.
+     Quand c’est le cas, on colle la barre d’onglets au bas visible (sans marge d’indicateur d’accueil) ; la bande prend la couleur du fond. */
   function fit(){
-    var r=document.documentElement, mm=function(q){ return !!(window.matchMedia&&matchMedia(q).matches); };
-    var app=navigator.standalone===true||mm('(display-mode: standalone)')||mm('(display-mode: fullscreen)')||mm('(display-mode: minimal-ui)');
-    var on=fixMode==='on'||(fixMode==='auto'&&app);
+    var r=document.documentElement, app=navigator.standalone===true||!!(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
     var land=innerWidth>innerHeight, sw=screen.width||0, sh=screen.height||0, scr=land?Math.min(sw,sh):Math.max(sw,sh);
-    var pb=document.getElementById('vpProbe'), cb=0, lvh=0;
-    if(pb){ cb=pb.children[0].offsetHeight; lvh=pb.children[1].offsetHeight; }
-    var H=Math.max(scr,innerHeight,lvh), vv=window.visualViewport;
-    window.__scr={app:app,on:on,mode:fixMode,scr:scr,ih:innerHeight,cb:cb,lvh:lvh,vh:vv?Math.round(vv.height):0,vt:vv?Math.round(vv.offsetTop):0,H:H};
-    if(r.classList.contains('sa')!==on) r.classList.toggle('sa',on);
-    if(on) r.style.setProperty('--H',H+'px'); else r.style.removeProperty('--H');
-    /* écart détecté : on relance la mise en page d’iOS (remise à zéro du défilement + réécriture du viewport) */
-    if(on&&cb&&H-cb>2&&Date.now()-lastNudge>1500){
-      lastNudge=Date.now();
-      try{ window.scrollTo(0,0); var m=document.querySelector('meta[name=viewport]'), c=m.getAttribute('content'); m.setAttribute('content',c+',height=device-height'); requestAnimationFrame(function(){ m.setAttribute('content',c); }); }catch(e){}
-    }
+    var cut=app&&scr-innerHeight>20;
+    if(r.classList.contains('cut')!==cut) r.classList.toggle('cut',cut);
   }
-  window.__fit=fit; window.__setFix=function(m){ fixMode=m; fit(); };
-  fit();
+  fit(); window.__fit=fit;
   addEventListener('resize',fit); addEventListener('orientationchange',function(){ setTimeout(fit,300); });
-  addEventListener('pageshow',function(){ setTimeout(fit,50); });
-  document.addEventListener('DOMContentLoaded',fit);
+  /* verrouillage : rien n’est visible avant le code */
+  try{ var ls=JSON.parse(localStorage.getItem('souffle.settings')||'{}'); if(ls.lock&&ls.lockHash) document.documentElement.classList.add('locked'); }catch(e){}
   var t=document.querySelector('meta[name=theme-color]'); if(t) t.setAttribute('content',d==='dark'?'#151515':'#e2ebf1');
 })();
 </script>
@@ -104,7 +90,7 @@ input{-webkit-user-select:text;user-select:text}
 
 /* fond : aube en clair, charbon de l'icône en sombre, avec un grain léger */
 .bg{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,var(--bg-a) 0%,var(--bg-b) 55%,var(--bg-c) 100%)}
-html[data-theme="dark"] .bg{background:radial-gradient(130% 95% at 100% 100%,#383838 0%,#1d1d1d 48%,#111 100%)}
+html[data-theme="dark"] .bg{background:linear-gradient(180deg,rgba(21,21,21,0) 72%,#151515 100%),radial-gradient(120% 80% at 100% 72%,#363636 0%,#1c1c1c 46%,#121212 100%)}
 .bg::after{content:"";position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 html[data-theme="dark"] .bg::after{opacity:.09}
@@ -161,6 +147,62 @@ html[data-theme="dark"] .heart{filter:drop-shadow(0 20px 34px rgba(0,0,0,.55))}
 .btn.big{height:54px;border-radius:27px;font-size:16px;width:100%}
 html[data-dg] .duo .btn{width:100%}
 
+/* verrouillage */
+.lock{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(var(--safe-t) + 16px) 24px calc(var(--safe-b) + 16px);color:#f3efe9;text-align:center;
+  background:radial-gradient(130% 95% at 100% 100%,#383838 0%,#1b1b1b 48%,#0e0e0e 100%)}
+html.locked .lock{display:flex;animation:fadeIn .25s ease both}
+html.locked #scroll,html.locked .top,html.locked .tabbar-wrap,html.locked .toast,html.locked .sheet,html.locked .sheet-back{visibility:hidden}
+.lock.out{animation:lockOut .34s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes lockOut{to{opacity:0;transform:scale(1.06)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.lock-heart{width:78px;height:70px;margin-bottom:20px;overflow:visible;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5));animation:breatheSoft 5s ease-in-out infinite}
+.lock h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.lock p{margin:8px 0 0;font-size:15px;color:rgba(243,239,233,.62);min-height:21px}
+.dots{display:flex;gap:18px;margin:26px 0 34px}
+.dots i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(243,239,233,.55)}
+.dots i.on{background:#f3efe9;box-shadow:none;animation:dotPop .25s cubic-bezier(.2,.9,.3,1.4)}
+.dots.shake{animation:shake .45s}
+.dots.good i{background:#b8d9b3;box-shadow:none}
+@keyframes shake{20%{transform:translateX(-11px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(3px)}}
+.pad{display:grid;grid-template-columns:repeat(3,76px);gap:16px 26px}
+.key{width:76px;height:76px;border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.1);color:#f3efe9;font:400 30px/1 var(--font);
+  display:grid;place-items:center;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:background .18s,transform .12s;font-variant-numeric:tabular-nums}
+.key:active{background:rgba(255,255,255,.3);transform:scale(.92)}
+.key.plain{background:none;box-shadow:none}
+.key.plain:active{background:rgba(255,255,255,.12)}
+.key svg{width:30px;height:30px}
+.key.ghost{visibility:hidden}
+.lock-foot{display:flex;gap:28px;margin-top:26px;min-height:44px}
+.lnk{border:0;background:none;color:rgba(243,239,233,.72);font:500 15px var(--font);padding:10px 6px;cursor:pointer}
+@media (max-height:700px){.key{width:66px;height:66px;font-size:26px}.pad{grid-template-columns:repeat(3,66px);gap:12px 24px}.lock-heart{width:58px;height:52px;margin-bottom:12px}.dots{margin:18px 0 24px}}
+
+/* micro-animations */
+@keyframes dotPop{0%{transform:scale(.4)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes tick{0%{transform:scale(.82);opacity:.4}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes beat{0%{transform:scale(1)}18%{transform:scale(1.09)}36%{transform:scale(.985)}52%{transform:scale(1.045)}100%{transform:scale(1)}}
+@keyframes rowIn{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes slideL{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes ring{0%{box-shadow:inset 0 0 0 2px var(--accent),0 0 0 0 rgba(201,109,96,.45)}100%{box-shadow:inset 0 0 0 2px var(--accent),0 0 0 9px rgba(201,109,96,0)}}
+.hero-n.tick{animation:tick .5s cubic-bezier(.2,.9,.3,1.2)}
+.hero.beat .heart{animation:beat .75s ease-out}
+.hero.beat .aura{animation:none;opacity:calc(var(--aura) * 1.35);transition:opacity .4s}
+.budget i.new{animation:dotPop .45s cubic-bezier(.2,.9,.3,1.4)}
+.row.enter{animation:rowIn .45s cubic-bezier(.2,.9,.3,1.1) both}
+#todayList.from-l{animation:slideL .32s ease both}
+#todayList.from-r{animation:slideR .32s ease both}
+.card.delay:not([hidden]){animation:cardIn .42s cubic-bezier(.2,.9,.3,1.15)}
+.chip.on{animation:dotPop .3s cubic-bezier(.2,.9,.3,1.3)}
+.bar i{transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.chart rect.cb{transform-box:fill-box;transform-origin:50% 100%;animation:grow .6s cubic-bezier(.2,.9,.3,1.1) both}
+.tl.now .tl-dot{animation:ring 2.2s ease-out infinite}
+.spend-amt,.goal-amt{transition:color .3s}
+.welcome:not([hidden]){animation:cardIn .5s ease both}
+
 /* repousser / spéciale / cagnotte */
 .duo2{display:flex;gap:10px;margin-top:10px}
 .duo2 .btn{flex:1;min-width:0}
@@ -184,8 +226,11 @@ html[data-dg] .btn.wide{width:100%}
 .next p{margin:0 0 9px;font-size:14.5px;line-height:1.4}
 .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:inherit;background:var(--grad-h);min-width:6px}
-.quote{font-size:17px;line-height:1.45;padding:20px 22px}
-.quote::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:3px;border-radius:0 3px 3px 0;
+.spend{padding:18px 20px 20px 24px}
+.spend-amt{margin-top:16px;font-size:40px;font-weight:500;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
+.spend-txt{margin-top:6px;font-size:15px;line-height:1.45;color:var(--ink2)}
+/* le trait dégradé de l’ancienne citation, réutilisé comme signature */
+.trait::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:3px;border-radius:0 3px 3px 0;
   background:linear-gradient(180deg,var(--sky),var(--sun),var(--coral))}
 .welcome h3{margin:0 0 4px;font-size:18px;font-weight:600}
 .welcome p{margin:0 0 14px;font-size:15px;line-height:1.45;color:var(--ink2)}
@@ -277,7 +322,7 @@ a.btn{text-decoration:none}
   display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;min-height:56px;border-radius:24px;
   background:var(--glass);-webkit-backdrop-filter:blur(26px) saturate(1.8);backdrop-filter:blur(26px) saturate(1.8);
   box-shadow:inset 0 0 0 1px var(--glass-line),0 12px 34px rgba(0,0,0,.18);
-  opacity:0;transform:translateY(16px);visibility:hidden;transition:opacity .25s,transform .3s cubic-bezier(.2,.85,.25,1),visibility 0s .3s}
+  opacity:0;transform:translateY(16px) scale(.96);visibility:hidden;transition:opacity .25s,transform .3s cubic-bezier(.2,.85,.25,1),visibility 0s .3s}
 .toast.show{opacity:1;transform:none;visibility:visible;transition:opacity .25s,transform .3s cubic-bezier(.2,.85,.25,1)}
 .toast p{flex:1;margin:0;font-size:15px;line-height:1.35}
 .toast .btn{height:38px;padding:0 14px;font-size:14px}
@@ -288,6 +333,10 @@ a.btn{text-decoration:none}
   background:radial-gradient(130% 95% at 100% 100%,#383838 0%,#1b1b1b 48%,#0e0e0e 100%);
   opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
 .breathe.open{opacity:1;visibility:visible;transition:opacity .4s}
+.br-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.br-top,.br-stage,.br-actions{position:relative;z-index:1}
+.br-phase.swap{animation:phaseIn .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes phaseIn{from{opacity:0;transform:translateY(8px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
 .br-top{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;min-height:48px}
 .br-top span{font-size:15px;color:rgba(243,239,233,.55);font-variant-numeric:tabular-nums}
 .br-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:0}
@@ -383,15 +432,11 @@ html[data-theme="dark"] .seg button.on{background:rgba(255,255,255,.2);color:#ff
 .banner span{font-size:13px;color:var(--ink2)}
 
 /* mode app iOS : on recolle sur le bas réel de l’écran (--H mesurée au démarrage) */
-#vpProbe{position:fixed;top:0;left:0;bottom:0;width:1px;visibility:hidden;pointer-events:none;z-index:-1}
-#vpProbe i{position:absolute;top:0;bottom:0;left:0;width:1px}
-#vpProbe b{position:fixed;top:0;left:0;width:1px;height:100vh;height:100lvh}
-html.sa,html.sa body{height:auto}
-html.sa body,html.sa .bg,html.sa #scroll,html.sa .sheet-back,html.sa .breathe,html.sa .tabbar-wrap,html.sa .sheet{bottom:calc(100% - var(--H))}
-html.sa .toast{bottom:calc(100% - var(--H) + var(--safe-b) + 98px)}
-html.sa .sheet.mini{max-height:calc(var(--H) - var(--safe-t) - var(--top-x) - 20px)}
+/* bande iOS : plus de marge d’indicateur quand la vue web est raccourcie */
+html.cut{--safe-b:0px}
 
 @media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .page{animation:none}.hero .heart,.hero .aura{animation:none}
   .breathe.run .br-heart .heart,.breathe.run .br-heart .aura{animation:none}
   .br-heart .heart{transform:scale(.9)}
@@ -444,8 +489,27 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
   </defs>
 </svg>
 
-<div id="vpProbe" aria-hidden="true"><i></i><b></b></div>
 <div class="bg" aria-hidden="true"></div>
+
+<!-- verrouillage -->
+<section class="lock" id="lock" role="dialog" aria-modal="true" aria-label="Souffle est verrouillé">
+  <svg class="lock-heart" viewBox="-2 -2 104 94" aria-hidden="true">
+    <use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/>
+    <use href="#heartPath" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".8" stroke-linejoin="round"/>
+  </svg>
+  <h2 id="lockTitle">Souffle est verrouillé</h2>
+  <p id="lockSub">Entre ton code</p>
+  <div class="dots" id="lockDots"><i></i><i></i><i></i><i></i></div>
+  <div class="pad" id="lockPad">
+    <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+    <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+    <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+    <button class="key plain" id="keyBio" data-act="bio" aria-label="Face ID ou Touch ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5V6a2 2 0 0 1 2-2h2.5M15.5 4H18a2 2 0 0 1 2 2v2.5M20 15.5V18a2 2 0 0 1-2 2h-2.5M8.5 20H6a2 2 0 0 1-2-2v-2.5M9 9.5v1.2M15 9.5v1.2M12 9.5v3.6h-1M9.3 15.6a4 4 0 0 0 5.4 0"/></svg></button>
+    <button class="key" data-k="0">0</button>
+    <button class="key plain" data-act="del" aria-label="Effacer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h10a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 19H9l-5.5-7Z"/><path d="m11.5 9.5 5 5M16.5 9.5l-5 5"/></svg></button>
+  </div>
+  <div class="lock-foot"><button class="lnk" id="lockForgot">Code oublié ?</button><button class="lnk" id="lockCancel">Annuler</button></div>
+</section>
 
 <header class="top" id="top">
   <div class="top-title" id="topTitle"></div>
@@ -510,7 +574,11 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
       <div class="next" id="nextBox"><p id="nextT"></p><div class="bar"><i id="nextBar"></i></div></div>
     </div>
 
-    <div class="card quote" id="quote"></div>
+    <div class="card trait spend" id="spendCard">
+      <div class="seg-wrap"><div class="seg" id="spendSeg" data-glass-full aria-label="Période"><button data-v="day">Aujourd’hui</button><button data-v="7">7 jours</button><button data-v="30">30 jours</button><button data-v="all">Au total</button></div></div>
+      <div class="spend-amt" id="spendAmt">0,00 €</div>
+      <div class="spend-txt" id="spendTxt"></div>
+    </div>
 
     <div class="day-head">
       <h2 class="sec" id="dayTitle">Ta journée</h2>
@@ -730,14 +798,15 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 
 <!-- respiration -->
 <section class="breathe" id="breathe" tabindex="-1" role="dialog" aria-modal="true" aria-label="Respirer" aria-hidden="true">
+  <canvas class="br-fx" id="brFx" aria-hidden="true"></canvas>
   <div class="br-top">
-    <span id="brClock">3:00</span>
+    <span id="brClock">2:00</span>
     <button class="btn ib" id="btnBrClose" data-glass-icon aria-label="Fermer">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
     </button>
   </div>
   <div class="br-stage">
-    <div class="br-heart">
+    <div class="br-heart" id="brHeartBox">
       <div class="aura" aria-hidden="true"></div>
       <svg class="heart" viewBox="-2 -2 104 94" aria-hidden="true">
         <use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="url(#gShade)"/>
@@ -777,6 +846,32 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
       </div>
     </div>
 
+    <h3 class="group-title">Respiration</h3>
+    <div class="group">
+      <div class="row stack">
+        <div class="row-l"><div class="row-t">Durée de l’exercice</div><div class="row-s">Quand tu touches « J’ai une envie »</div></div>
+        <div class="seg" id="brSeg" data-glass-full aria-label="Durée de la respiration"><button data-v="60">1 min</button><button data-v="120">2 min</button><button data-v="180">3 min</button><button data-v="300">5 min</button></div>
+      </div>
+    </div>
+
+    <h3 class="group-title">Verrouillage</h3>
+    <div class="group">
+      <div class="row">
+        <div class="row-l"><div class="row-t">Code à l’ouverture</div><div class="row-s">4 chiffres pour ouvrir Souffle</div></div>
+        <span class="sw"><input type="checkbox" id="swLock" aria-label="Code à l’ouverture"><i></i></span>
+      </div>
+      <div class="row" id="rowBio" hidden>
+        <div class="row-l"><div class="row-t">Face ID ou Touch ID</div><div class="row-s" id="bioInfo">Déverrouiller sans taper le code</div></div>
+        <span class="sw"><input type="checkbox" id="swBio" aria-label="Face ID ou Touch ID"><i></i></span>
+      </div>
+      <div class="row stack" id="rowDelay" hidden>
+        <div class="row-l"><div class="row-t">Verrouiller en quittant l’app</div></div>
+        <div class="seg" id="delaySeg" data-glass-full aria-label="Délai de verrouillage"><button data-v="0">Tout de suite</button><button data-v="60">Après 1 min</button><button data-v="300">Après 5 min</button></div>
+      </div>
+      <div class="row actions" id="rowCode" hidden><button class="btn" id="btnCode">Changer le code</button></div>
+      <div class="row" id="rowLockNote" hidden><div class="row-l"><div class="row-s">Le code empêche d’ouvrir l’app sur ce téléphone. Il ne chiffre pas tes données.</div></div></div>
+    </div>
+
     <h3 class="group-title">Tes données</h3>
     <div class="group">
       <div class="row"><div class="row-l"><div class="row-t">Sur cet appareil</div><div class="row-s" id="dataInfo"></div></div></div>
@@ -810,11 +905,6 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 
     <h3 class="group-title">À propos</h3>
     <div class="group">
-      <div class="row stack">
-        <div class="row-l"><div class="row-t">Bas de l’écran (iPhone)</div><div class="row-s">Si le bas de l’app est coupé par une bande vide, essaie « Forcé ».</div></div>
-        <div class="seg" id="fixSeg" data-glass-full aria-label="Correctif du bas de l’écran"><button data-v="auto">Auto</button><button data-v="on">Forcé</button><button data-v="off">Non</button></div>
-        <div class="row-s" id="scrInfo"></div>
-      </div>
       <div class="row"><div class="row-l"><div class="row-t">Souffle</div><div class="row-s">Souffle ne remplace pas un avis médical. Tes données restent sur ton téléphone.</div></div><div class="row-v" id="verAbout"></div></div>
     </div>
     <p class="credit">App développée avec Claude - AH Studio - 2026</p>
@@ -828,11 +918,19 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 (function(){
 'use strict';
 
-const APP_VERSION = '1.3.1';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.4.0';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.4.0', date:'10 novembre 2026', items:[
+    'Dépensé en fumant : aujourd’hui, 7 jours, 30 jours et au total, sur l’accueil',
+    'Respiration de 2 minutes par défaut, durée réglable, et particules qui suivent ton souffle',
+    'Code à l’ouverture, avec Face ID ou Touch ID',
+    'Micro-animations : cœur qui bat, chiffres qui comptent, barres qui poussent, lignes qui arrivent',
+    'Bas de l’écran : la bande d’iOS 27 se fond dans le décor ; ancien correctif retiré',
+    'La pensée du jour quitte l’accueil, son trait dégradé passe sur les dépenses'
+  ]},
   { v:'1.3.1', date:'10 novembre 2026', items:[
     'Bas de l’écran iPhone : nouveau correctif (mesure de la zone réelle, relance de la mise en page)',
     'Réglage de secours « Bas de l’écran » (Auto, Forcé, Non) et mesures d’écran dans les Réglages'
@@ -977,7 +1075,7 @@ const TABS = [
 ];
 
 /* ---------- réglages d’interface ---------- */
-const DEFAULTS = { fix:'auto', theme:'auto', glass:true, autoUpdate:true, tab:0, lastCheck:0, range:7 };
+const DEFAULTS = { brDur:120, spend:'day', lock:false, lockHash:'', lockSalt:'', bioId:'', lockDelay:0, theme:'auto', glass:true, autoUpdate:true, tab:0, lastCheck:0, range:7 };
 let S = Object.assign({}, DEFAULTS);
 try { Object.assign(S, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch(e){}
 function save(){ try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(S)); } catch(e){} }
@@ -1036,6 +1134,17 @@ function cmpVer(a, b){
   for (let i = 0; i < Math.max(x.length, y.length); i++){ const d = (x[i]||0) - (y[i]||0); if (d) return d > 0 ? 1 : -1; }
   return 0;
 }
+function pop(el, cls){ if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+const reducedMotion = ()=>!!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+function countTo(el, to, fmt){
+  const from = el._v == null ? to : el._v; el._v = to;
+  if (Math.abs(from - to) < 0.005 || reducedMotion()){ setText(el, fmt(to)); return; }
+  cancelAnimationFrame(el._raf);
+  const t0 = performance.now(), dur = 650;
+  const step = (now)=>{ const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); setText(el, fmt(from + (to - from) * e)); if (k < 1) el._raf = requestAnimationFrame(step); };
+  el._raf = requestAnimationFrame(step);
+}
+function heartBeat(){ const h = $('hero'); pop(h, 'beat'); clearTimeout(h._bt); h._bt = setTimeout(()=>h.classList.remove('beat'), 800); }
 function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 function haptic(){ try { if (navigator.vibrate) navigator.vibrate(12); } catch(e){} }
 
@@ -1213,14 +1322,18 @@ function renderToday(st){
       sub += wl >= 0 ? ' Cette semaine : ' + st.nWeek + ' sur ' + wm + '.' : ' Cette semaine : ' + st.nWeek + ' sur ' + wm + ', au-dessus de ton maximum.';
     }
   }
-  setText($('heroN'), N); setText($('heroL'), L); setText($('heroSub'), sub);
+  const hn = $('heroN');
+  if (hn._init && hn.textContent !== N) pop(hn, 'tick');
+  hn._init = true;
+  setText(hn, N); setText($('heroL'), L); setText($('heroSub'), sub);
   /* budget en pastilles */
   let h = '';
   if (dots && lim > 0){
     const shown = Math.min(Math.max(lim, n), 30);
-    for (let i = 0; i < shown; i++) h += '<i class="' + (i < n ? (i < lim ? 'used' : 'over') : '') + '"></i>';
+    const fresh = renderToday.prevN != null && n > renderToday.prevN ? n - 1 : -1;
+    for (let i = 0; i < shown; i++) h += '<i class="' + (i < n ? (i < lim ? 'used' : 'over') : '') + (i === fresh ? ' new' : '') + '"></i>';
   }
-  setHTML($('budget'), h);
+  setHTML($('budget'), h); renderToday.prevN = n;
 
   /* depuis la dernière */
   setText($('sinceL'), st.last == null ? 'Sans cigarette notée depuis' : D.specials.indexOf(st.last) >= 0 && !D.logs.some(l=>l.t === st.last) ? 'Depuis ta dernière spéciale' : 'Depuis ta dernière cigarette');
@@ -1238,11 +1351,7 @@ function renderToday(st){
     $('nextBar').style.width = clamp((st.gap - pv) / (nx.ms - pv) * 100, 0, 100).toFixed(1) + '%';
   }
 
-  /* pensée du jour */
-  const seed = keyTs(st.todayK) / DAY | 0;
-  let q = pick(MSG.day, seed);
-  if (D.reasons.length && seed % 3 === 0) q = 'Pense à pourquoi tu fais ça : « ' + pick(D.reasons, seed) + ' ».';
-  setText($('quote'), q);
+  renderSpend(st);
   renderDelay();
 
   /* journée affichée (aujourd’hui par défaut, ou un jour passé) */
@@ -1259,14 +1368,32 @@ function renderToday(st){
   D.specials.forEach((t, i)=>{ if (inDay(t)) items.push({ t, kind:'spec', i }); });
   items.sort((a,b)=>b.t - a.t);
   const editable = (k)=>k === 'log' || k === 'spec';
+  const seen = renderToday.seen || (renderToday.seen = new Set()), first = !renderToday.seenInit;
+  const isNew = (it)=>{ const key = it.kind + it.t; if (seen.has(key)) return false; seen.add(key); return !first; };
+  items.forEach(it=>{ it.fresh = isNew(it); });
+  renderToday.seenInit = true;
   setHTML($('todayList'), items.length ? items.map(it=>
-    '<div class="row' + (editable(it.kind) ? ' edit" data-edit="' + it.kind + ':' + it.t + '" role="button" tabindex="0" aria-label="Modifier cette cigarette' : '') + '"><span class="time">' + fmtTime(it.t) + '</span><div class="row-l"><span class="tag"><span class="dot' + (it.kind === 'spec' ? ' spec' : it.kind !== 'log' ? ' win' : '') + '"></span>' +
+    '<div class="row' + (it.fresh ? ' enter' : '') + (editable(it.kind) ? ' edit" data-edit="' + it.kind + ':' + it.t + '" role="button" tabindex="0" aria-label="Modifier cette cigarette' : '') + '"><span class="time">' + fmtTime(it.t) + '</span><div class="row-l"><span class="tag"><span class="dot' + (it.kind === 'spec' ? ' spec' : it.kind !== 'log' ? ' win' : '') + '"></span>' +
     (it.kind === 'win' ? 'Envie surmontée' : it.kind === 'delay' ? 'Cigarette repoussée de 10 min' : it.kind === 'spec' ? 'Spéciale' : (it.k ? 'Cigarette, ' + TRIG_L[it.k].toLowerCase() : 'Cigarette')) + '</span></div>' +
     '<button class="x" data-del="' + it.kind + ':' + it.t + '" aria-label="Supprimer">' + ICONS.x + '</button></div>').join('')
     : '<div class="row empty-row">' + (viewDay === 0 ? 'Rien de noté pour l’instant. Quand une envie arrive, touche « J’ai une envie » : on respire ensemble.' : 'Rien de noté ce jour-là. Un oubli ? Ajoute-le ci-dessous.') + '</div>');
 }
 
 let viewDay = 0;   // 0 = aujourd’hui, -1 = hier…
+
+/* ---------- dépensé en fumant ---------- */
+function renderSpend(st){
+  const v = S.spend || 'day', now = st.now, d0 = dayStart(now);
+  for (const b of $('spendSeg').querySelectorAll('button')) setOn(b, b.dataset.v === v);
+  const from = v === 'day' ? d0 : v === '7' ? addDays(d0, -6) : v === '30' ? addDays(d0, -29) : -Infinity;
+  const n = D.logs.filter(l=>l.t >= from && l.t <= now).length, eur = n * D.base.price / D.base.perPack;
+  const sp = D.specials.filter(t=>t >= from && t <= now).length;
+  countTo($('spendAmt'), eur, fmtEur);
+  const when = v === 'day' ? ' aujourd’hui' : v === '7' ? ' sur les 7 derniers jours' : v === '30' ? ' sur les 30 derniers jours' : ' depuis tes débuts avec Souffle, le ' + fmtDay(D.since);
+  let t = n ? 'dépensés en fumant ' + n + ' ' + pl(n, 'cigarette', 'cigarettes') + when + '.' : (v === 'day' ? 'Rien de parti en fumée aujourd’hui.' : 'Rien de parti en fumée' + when + '.');
+  if (sp) t += ' Les spéciales ne sont pas comptées.';
+  setText($('spendTxt'), t);
+}
 /* ---------- Progrès ---------- */
 function renderProgress(st){
   for (const b of $('rangeSeg').querySelectorAll('button')) setOn(b, +b.dataset.v === S.range);
@@ -1338,7 +1465,7 @@ function drawChart(el, keys, vals, lims, base, todayK, startK){
   vals.forEach((v, i)=>{
     const cx = pl_ + slot * (i + 0.5), x = cx - bw / 2, isT = keys[i] === todayK, pre = keys[i] < startK;
     if (pre && !v){ /* avant l’installation : pas de donnée, rien à dessiner */ }
-    else if (v > 0){ const yy = y(v), hh = H - pb - yy; g += '<rect x="' + x.toFixed(1) + '" y="' + yy.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="' + Math.min(bw / 2, 8).toFixed(1) + '" fill="url(#gBars)"' + (isT ? '' : ' opacity=".92"') + '/>'; }
+    else if (v > 0){ const yy = y(v), hh = H - pb - yy; g += '<rect class="cb" style="animation-delay:' + (i * (N > 10 ? 12 : 45)) + 'ms" x="' + x.toFixed(1) + '" y="' + yy.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="' + Math.min(bw / 2, 8).toFixed(1) + '" fill="url(#gBars)"' + (isT ? '' : ' opacity=".92"') + '/>'; }
     else g += '<circle cx="' + cx.toFixed(1) + '" cy="' + (H - pb - 4) + '" r="3" fill="var(--ok)" opacity=".8"/>';
     const ly = y(lims[i]);
     if (!pre) g += '<line x1="' + (cx - bw / 2 - 3).toFixed(1) + '" x2="' + (cx + bw / 2 + 3).toFixed(1) + '" y1="' + ly.toFixed(1) + '" y2="' + ly.toFixed(1) + '" stroke="var(--ink)" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>';
@@ -1348,7 +1475,7 @@ function drawChart(el, keys, vals, lims, base, todayK, startK){
     if (show) g += '<text x="' + cx.toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle" font-size="11.5" ' + (isT ? 'font-weight="700" fill="var(--ink)"' : 'fill="var(--ink2)"') + '>' + (N <= 10 ? days[d.getDay()] : d.getDate()) + '</text>';
   });
   g += '</svg>';
-  el.innerHTML = g;
+  setHTML(el, g);
 }
 
 /* ---------- Bienfaits ---------- */
@@ -1533,7 +1660,7 @@ function logSmoke(){
   lastType = 'log'; lastMsg = m; syncLogType();
   setText($('logMsg'), m);
   for (const c of trigChips.children) setOn(c, false);
-  render();
+  render(); heartBeat();
   logSheet.set(true);
 }
 trigChips.addEventListener('click', (e)=>{
@@ -1577,7 +1704,7 @@ function renderDelay(){
     if (!delayTimer) delayTimer = setInterval(()=>{ if (!document.hidden) renderDelay(); }, 1000);
   } else {
     if (!d.ok){
-      d.ok = true; D.delays.push(d.end); D.delays.sort((a,b)=>a - b); saveD(); haptic();
+      d.ok = true; D.delays.push(d.end); D.delays.sort((a,b)=>a - b); saveD(); haptic(); heartBeat();
       toast(pick(MSG.delay));
       setTimeout(render, 0);   // la journée et les stats intègrent le report
     }
@@ -1607,7 +1734,7 @@ function avgLast7(st){
 }
 function renderGoal(st){
   const pot = Math.max(0, st.saved - D.spent), g = D.goal;
-  setText($('goalAmt'), fmtEur(pot));
+  countTo($('goalAmt'), pot, fmtEur);
   setHidden($('goalView'), goalEditing); setHidden($('goalEdit'), !goalEditing);
   setHidden($('goalBarW'), !g);
   setHidden($('btnGoalBuy'), !(g && pot >= g.amount));
@@ -1722,8 +1849,8 @@ $('btnEditDel').addEventListener('click', ()=>{
   ED = null;
 });
 $('btnForgot').addEventListener('click', openAdd);
-$('dayPrev').addEventListener('click', ()=>{ viewDay--; render(); });
-$('dayNext').addEventListener('click', ()=>{ viewDay = Math.min(0, viewDay + 1); render(); });
+$('dayPrev').addEventListener('click', ()=>{ viewDay--; render(); pop($('todayList'), 'from-l'); });
+$('dayNext').addEventListener('click', ()=>{ viewDay = Math.min(0, viewDay + 1); render(); pop($('todayList'), 'from-r'); });
 
 $('todayList').addEventListener('keydown', (e)=>{ if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')){ e.preventDefault(); e.target.click(); } });
 $('todayList').addEventListener('click', (e)=>{
@@ -1751,10 +1878,11 @@ $('todayList').addEventListener('click', (e)=>{
 });
 
 /* ---------- respiration ---------- */
-const BR_TOTAL = 180000, BR_CYCLE = 10000;
+const BR_CYCLE = 10000;
+const brTotal = ()=>(S.brDur || 120) * 1000;
 const br = $('breathe');
 let brT0 = 0, brTimer = null;
-const brSheet = makeSheet(br, null, null, ()=>{ br.classList.remove('run'); clearInterval(brTimer); brTimer = null; applyTheme(); });
+const brSheet = makeSheet(br, null, null, ()=>{ br.classList.remove('run'); clearInterval(brTimer); brTimer = null; cancelAnimationFrame(fx.raf); fx.raf = 0; applyTheme(); });
 function openBreathe(){
   const pool = D.reasons.length ? D.reasons.map(r=>'Rappelle-toi : ' + r.charAt(0).toLowerCase() + r.slice(1) + (/[.!?…]$/.test(r) ? '' : '.')) : MSG.day.slice(0, 6);
   setText($('brReason'), pick(pool));
@@ -1762,28 +1890,80 @@ function openBreathe(){
   brSheet.set(true);
   const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.setAttribute('content', '#121212');
   br.classList.remove('run'); void br.offsetWidth; br.classList.add('run');   // relance l’animation au début du cycle
-  brT0 = Date.now(); tickBreathe();
+  brT0 = Date.now(); brPhase = ''; tickBreathe();
   clearInterval(brTimer); brTimer = setInterval(tickBreathe, 200);
+  fx.calm = false; requestAnimationFrame(()=>{ fxInit(); cancelAnimationFrame(fx.raf); fx.raf = requestAnimationFrame(fxFrame); });
+}
+let brPhase = '';
+function setPhase(t){
+  if (brPhase === t) return; brPhase = t;
+  const el = $('brPhase'); setText(el, t); pop(el, 'swap');
 }
 function tickBreathe(){
-  const el = Date.now() - brT0, left = Math.max(0, BR_TOTAL - el);
+  const el = Date.now() - brT0, left = Math.max(0, brTotal() - el);
   const s = Math.ceil(left / 1000);
   setText($('brClock'), Math.floor(s / 60) + ':' + pad(s % 60));
   if (left <= 0){
-    setText($('brPhase'), 'Trois minutes');
-    setText($('brHint'), 'L’envie a eu le temps de redescendre. Comment ça va ?');
-    br.classList.remove('run'); clearInterval(brTimer); brTimer = null; return;
+    const m = Math.round(brTotal() / 60000);
+    setPhase('C’est passé');
+    setText($('brHint'), m + ' ' + pl(m, 'minute', 'minutes') + ' : l’envie a eu le temps de redescendre. Comment ça va ?');
+    br.classList.remove('run'); fx.calm = true; clearInterval(brTimer); brTimer = null; return;
   }
-  setText($('brPhase'), (el % BR_CYCLE) < BR_CYCLE / 2 ? 'Inspire' : 'Expire');
+  setPhase((el % BR_CYCLE) < BR_CYCLE / 2 ? 'Inspire' : 'Expire');
+}
+
+/* particules : aspirées vers le cœur à l’inspiration, relâchées à l’expiration */
+const fx = { cv:$('brFx'), c:null, ps:[], raf:0, w:0, h:0, cx:0, cy:0, R:100, calm:false };
+const FX_COL = ['169,197,214', '196,210,177', '244,229,136', '237,186,129', '221,136,117', '255,255,255'];
+function fxInit(){
+  const r = br.getBoundingClientRect(), hb = $('brHeartBox').getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+  fx.w = r.width; fx.h = r.height; fx.cv.width = Math.round(fx.w * dpr); fx.cv.height = Math.round(fx.h * dpr);
+  fx.c = fx.cv.getContext('2d'); fx.c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  fx.cx = hb.left + hb.width / 2 - r.left; fx.cy = hb.top + hb.height * 0.5 - r.top; fx.R = hb.width * 0.5;
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  fx.reduce = reduce; fx.ps = [];
+  const n = reduce ? 30 : 160;
+  for (let i = 0; i < n; i++) fx.ps.push({ a:Math.random() * 6.283, d:0.8 + Math.pow(Math.random(), 0.8) * 1.5, sp:(Math.random() - .5) * 0.0011,
+    z:0.5 + Math.random() * 2.1, c:FX_COL[(Math.random() * FX_COL.length) | 0], tw:Math.random() * 6.283, al:0.2 + Math.random() * 0.6, lag:Math.random() * 0.12 });
+}
+function fxFrame(){
+  const c = fx.c; if (!c || !brSheet.open){ fx.raf = 0; return; }
+  c.clearRect(0, 0, fx.w, fx.h);
+  const tt = (Date.now() - brT0) / BR_CYCLE;
+  c.globalCompositeOperation = 'lighter';
+  /* halo qui suit le souffle */
+  const s0 = fx.calm || fx.reduce ? 0.4 : 0.5 - 0.5 * Math.cos(2 * Math.PI * tt);
+  const R = fx.R * (0.9 + 0.6 * s0);
+  const g = c.createRadialGradient(fx.cx, fx.cy, R * 0.4, fx.cx, fx.cy, R * 1.5);
+  g.addColorStop(0, 'rgba(244,229,136,0)'); g.addColorStop(0.55, 'rgba(244,229,136,' + (0.035 + 0.05 * s0).toFixed(3) + ')');
+  g.addColorStop(0.8, 'rgba(221,136,117,' + (0.03 + 0.03 * s0).toFixed(3) + ')'); g.addColorStop(1, 'rgba(169,197,214,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(fx.cx, fx.cy, R * 1.5, 0, 6.283); c.fill();
+  for (const p of fx.ps){
+    const s = fx.calm || fx.reduce ? 0.4 : 0.5 - 0.5 * Math.cos(2 * Math.PI * (tt - p.lag));
+    if (!fx.reduce) { p.a += p.sp; p.tw += 0.025; }
+    const dist = fx.R * p.d * (1.3 - 0.5 * s);
+    const x = fx.cx + Math.cos(p.a) * dist, y = fx.cy + Math.sin(p.a) * dist * 0.92;
+    const a = p.al * (0.55 + 0.45 * Math.sin(p.tw)) * (0.7 + 0.3 * s);
+    const rr = p.z * (0.8 + 0.5 * s);
+    c.fillStyle = 'rgba(' + p.c + ',' + a.toFixed(3) + ')';
+    c.beginPath(); c.arc(x, y, rr, 0, 6.283); c.fill();
+    if (p.z > 1.9){ c.fillStyle = 'rgba(' + p.c + ',' + (a * 0.18).toFixed(3) + ')'; c.beginPath(); c.arc(x, y, rr * 3.2, 0, 6.283); c.fill(); }
+  }
+  fx.raf = requestAnimationFrame(fxFrame);
 }
 $('btnCraving').addEventListener('click', openBreathe);
 $('btnBrClose').addEventListener('click', ()=>brSheet.set(false));
 $('btnBrWin').addEventListener('click', ()=>{
   const t = Date.now(); D.cravings.push(t); saveD(); haptic();
-  brSheet.set(false); render();
+  brSheet.set(false); render(); heartBeat();
   toast(pick(MSG.win), ()=>{ const i = D.cravings.indexOf(t); if (i >= 0) D.cravings.splice(i, 1); saveD(); render(); });
 });
 $('btnBrLose').addEventListener('click', ()=>{ brSheet.set(false); setTimeout(logSmoke, 250); });
+
+$('spendSeg').addEventListener('click', (e)=>{
+  const b = e.target.closest('button'); if (!b) return;
+  S.spend = b.dataset.v; save(); render();
+});
 
 /* ---------- Progrès : période ---------- */
 $('rangeSeg').addEventListener('click', (e)=>{
@@ -1854,23 +2034,17 @@ function openSettings(){ syncSettingsUI(); renderUpdate(); $('sheetScroll').scro
 $('btnSettings').addEventListener('click', openSettings);
 $('btnClose').addEventListener('click', ()=>settingsSheet.set(false));
 
-function scrText(){
-  if (window.__fit) window.__fit();
-  const x = window.__scr; if (!x) return '';
-  return 'Mesures : mode app ' + (x.app ? 'oui' : 'non') + ', correctif ' + (x.on ? 'actif' : 'inactif') + ', écran ' + x.scr + ', fenêtre ' + x.ih +
-    ', zone fixe ' + x.cb + ', 100lvh ' + x.lvh + ', visible ' + x.vh + (x.vt ? ' (décalée de ' + x.vt + ')' : '') + ', recalage ' + Math.max(0, x.H - x.cb) + ' px.';
-}
 function syncSettingsUI(){
-  for (const b of $('fixSeg').querySelectorAll('button')) setOn(b, b.dataset.v === (S.fix || 'auto'));
-  setText($('scrInfo'), scrText());
+  for (const b of $('brSeg').querySelectorAll('button')) setOn(b, +b.dataset.v === (S.brDur || 120));
+  if (typeof syncLockUI === 'function') syncLockUI();
   themeBtns.forEach(b=>setOn(b, b.dataset.v === S.theme));
   setChecked(swGlass, S.glass !== false);
   setChecked(swAuto, S.autoUpdate !== false);
   setText($('dataInfo'), D.logs.length + ' ' + pl(D.logs.length, 'cigarette notée', 'cigarettes notées') + ', ' + D.specials.length + ' ' + pl(D.specials.length, 'spéciale', 'spéciales') + ', ' + D.cravings.length + ' ' + pl(D.cravings.length, 'envie surmontée', 'envies surmontées') + ', depuis le ' + fmtDay(D.since) + '.');
 }
-$('fixSeg').addEventListener('click', (e)=>{
+$('brSeg').addEventListener('click', (e)=>{
   const b = e.target.closest('button'); if (!b) return;
-  S.fix = b.dataset.v; save(); if (window.__setFix) window.__setFix(S.fix); syncSettingsUI();
+  S.brDur = +b.dataset.v; save(); syncSettingsUI();
 });
 themeSeg.addEventListener('click', (e)=>{
   const b = e.target.closest('button'); if (!b || !themeSeg.contains(b)) return;
@@ -1985,6 +2159,142 @@ $('changelog').innerHTML = CHANGELOG.map(c =>
   c.items.map(x=>'<li>' + x + '</li>').join('') + '</ul></div>').join('');
 setText($('verNow'), APP_VERSION); setText($('verAbout'), 'v' + APP_VERSION);
 
+/* ============================================================
+   Verrouillage : code à 4 chiffres (haché) + Face ID / Touch ID (clé d’accès WebAuthn de l’appareil)
+   ============================================================ */
+const lockEl = $('lock'), lockDots = $('lockDots');
+const LK = { mode:'unlock', buf:'', first:'', ok:null, fails:0, until:0, hiddenAt:0, hideT:0, busy:false };
+const lockOn = ()=>!!(S.lock && S.lockHash);
+const bioOn = ()=>!!(lockOn() && S.bioId);
+const rnd = (n)=>crypto.getRandomValues(new Uint8Array(n));
+const b64 = (buf)=>btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(buf))));
+const unb64 = (str)=>Uint8Array.from(atob(str), c=>c.charCodeAt(0));
+async function hashCode(code, salt){
+  const str = salt + ':' + code;
+  try { if (window.crypto && crypto.subtle){ const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2, '0')).join(''); } } catch(e){}
+  let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return 'f' + (h >>> 0).toString(16);
+}
+let bioAvail = false;
+(async ()=>{ try { bioAvail = !!(window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch(e){} syncLockUI(); })();
+function bioRegister(){
+  return navigator.credentials.create({ publicKey:{
+    challenge:rnd(32), rp:{ name:'Souffle' },
+    user:{ id:rnd(16), name:'Souffle', displayName:'Souffle' },
+    pubKeyCredParams:[{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
+    authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required', residentKey:'discouraged' },
+    timeout:60000, attestation:'none' } }).then(c=>{ if (!c) throw new Error('aucune clé'); return b64(c.rawId); });
+}
+function bioCheck(){
+  return navigator.credentials.get({ publicKey:{ challenge:rnd(32), allowCredentials:[{ type:'public-key', id:unb64(S.bioId) }],
+    userVerification:'required', timeout:60000 } }).then(r=>!!r);
+}
+function renderDots(){ Array.from(lockDots.children).forEach((d, i)=>setOn(d, i < LK.buf.length)); }
+const LOCK_TXT = { unlock:['Souffle est verrouillé', 'Entre ton code'], set1:['Choisis un code', '4 chiffres, à retenir'],
+  set2:['Confirme ton code', 'Tape-le une deuxième fois'], verify:['Ton code actuel', 'Pour confirmer que c’est bien toi'] };
+function lockTexts(){ setText($('lockTitle'), LOCK_TXT[LK.mode][0]); setText($('lockSub'), LOCK_TXT[LK.mode][1]); }
+function showLock(mode, onOk){
+  clearTimeout(LK.hideT);
+  LK.mode = mode; LK.buf = ''; LK.first = ''; LK.ok = onOk || null; LK.busy = false;
+  lockTexts(); renderDots(); lockDots.classList.remove('good', 'shake');
+  const bioKey = $('keyBio'), showBio = mode === 'unlock' && bioOn();
+  if (bioKey.classList.contains('ghost') === showBio) bioKey.classList.toggle('ghost', !showBio);
+  setHidden($('lockForgot'), mode !== 'unlock'); setHidden($('lockCancel'), mode === 'unlock');
+  lockEl.classList.remove('out');
+  document.documentElement.classList.add('locked');
+  const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.setAttribute('content', '#121212');
+  if (showBio) setTimeout(()=>{ if (LK.mode === 'unlock' && document.documentElement.classList.contains('locked')) tryBio(true); }, 400);
+}
+function hideLock(){
+  lockEl.classList.add('out');
+  clearTimeout(LK.hideT);
+  LK.hideT = setTimeout(()=>{ document.documentElement.classList.remove('locked'); lockEl.classList.remove('out'); applyTheme(); render(); }, 340);
+}
+function unlocked(){
+  LK.fails = 0; lockDots.classList.add('good'); haptic();
+  const f = LK.ok; LK.ok = null;
+  setTimeout(()=>{ hideLock(); if (f) f(); }, 160);
+}
+async function tryBio(auto){
+  if (!bioOn() || LK.busy) return;
+  LK.busy = true;
+  try { if (await bioCheck()){ LK.busy = false; unlocked(); return; } }
+  catch(e){ if (!auto) setText($('lockSub'), 'Face ID / Touch ID indisponible. Entre ton code.'); }
+  LK.busy = false;
+}
+function wrong(msg){
+  LK.buf = ''; renderDots(); pop(lockDots, 'shake'); setText($('lockSub'), msg);
+  try { if (navigator.vibrate) navigator.vibrate([30, 40, 30]); } catch(e){}
+}
+async function keyIn(d){
+  if (Date.now() < LK.until || LK.busy || LK.buf.length >= 4) return;
+  LK.buf += d; renderDots(); haptic();
+  if (LK.buf.length < 4) return;
+  const code = LK.buf; LK.busy = true;
+  await new Promise(r=>setTimeout(r, 160));
+  LK.busy = false;
+  if (LK.mode === 'set1'){ LK.first = code; LK.buf = ''; LK.mode = 'set2'; lockTexts(); renderDots(); return; }
+  if (LK.mode === 'set2'){
+    if (code !== LK.first){ LK.mode = 'set1'; LK.first = ''; setText($('lockTitle'), LOCK_TXT.set1[0]); wrong('Les deux codes ne correspondent pas. Recommence.'); return; }
+    S.lockSalt = b64(rnd(12)); S.lockHash = await hashCode(code, S.lockSalt); S.lock = true; save();
+    unlocked(); return;
+  }
+  if (await hashCode(code, S.lockSalt || '') === S.lockHash) { unlocked(); return; }
+  LK.fails++;
+  if (LK.fails >= 5){ LK.fails = 0; LK.until = Date.now() + 30000; wrong('Trop d’essais. Réessaie dans 30 secondes.'); }
+  else wrong('Code incorrect.');
+}
+$('lockPad').addEventListener('click', (e)=>{
+  const k = e.target.closest('.key'); if (!k) return;
+  if (k.dataset.k != null) keyIn(k.dataset.k);
+  else if (k.dataset.act === 'del'){ if (LK.buf){ LK.buf = LK.buf.slice(0, -1); renderDots(); } }
+  else if (k.dataset.act === 'bio') tryBio(false);
+});
+document.addEventListener('keydown', (e)=>{
+  if (!document.documentElement.classList.contains('locked')) return;
+  if (/^\d$/.test(e.key)) keyIn(e.key);
+  else if (e.key === 'Backspace' && LK.buf){ LK.buf = LK.buf.slice(0, -1); renderDots(); }
+});
+$('lockCancel').addEventListener('click', ()=>{ LK.ok = null; hideLock(); syncLockUI(); });
+$('lockForgot').addEventListener('click', ()=>{
+  if (!confirm('Sans le code, la seule façon de rouvrir Souffle est d’effacer toutes ses données (cigarettes, plan, raisons). Continuer ?')) return;
+  D = defData(); saveD();
+  S.lock = false; S.lockHash = ''; S.lockSalt = ''; S.bioId = ''; save();
+  hideLock(); syncLockUI(); toast('Données effacées, verrouillage retiré.');
+});
+
+/* réglages du verrouillage */
+const swLock = $('swLock'), swBio = $('swBio');
+function syncLockUI(){
+  const on = lockOn();
+  setChecked(swLock, on); setChecked(swBio, bioOn());
+  setHidden($('rowBio'), !(on && bioAvail)); setHidden($('rowDelay'), !on); setHidden($('rowCode'), !on); setHidden($('rowLockNote'), !on);
+  for (const b of $('delaySeg').querySelectorAll('button')) setOn(b, +b.dataset.v === (S.lockDelay || 0));
+}
+swLock.addEventListener('change', ()=>{
+  const want = swLock.checked; setChecked(swLock, lockOn());
+  if (want && !lockOn()) showLock('set1', ()=>{ syncLockUI(); toast('Code activé.' + (bioAvail ? ' Tu peux aussi activer Face ID ou Touch ID.' : '')); });
+  else if (!want && lockOn()) showLock('verify', ()=>{ S.lock = false; S.lockHash = ''; S.lockSalt = ''; S.bioId = ''; save(); syncLockUI(); toast('Verrouillage désactivé.'); });
+});
+swBio.addEventListener('change', ()=>{
+  const want = swBio.checked; setChecked(swBio, bioOn());
+  if (!want){ S.bioId = ''; save(); syncLockUI(); return; }
+  bioRegister().then(id=>{ S.bioId = id; save(); syncLockUI(); toast('Face ID / Touch ID activé.'); })
+    .catch(()=>{ syncLockUI(); toast('Face ID / Touch ID n’a pas pu être activé.'); });
+});
+$('delaySeg').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if (!b) return; S.lockDelay = +b.dataset.v; save(); syncLockUI(); });
+$('btnCode').addEventListener('click', ()=>showLock('verify', ()=>setTimeout(()=>showLock('set1', ()=>{ syncLockUI(); toast('Nouveau code enregistré.'); }), 380)));
+
+/* verrouiller en quittant l’app */
+document.addEventListener('visibilitychange', ()=>{
+  if (!lockOn()) return;
+  const locked = document.documentElement.classList.contains('locked');
+  if (document.hidden){
+    LK.hiddenAt = Date.now();
+    if (!locked && !(S.lockDelay > 0)) showLock('unlock');   // l’aperçu du sélecteur d’apps reste masqué
+  } else if (!locked && LK.hiddenAt && Date.now() - LK.hiddenAt >= (S.lockDelay || 0) * 1000) showLock('unlock');
+});
+
 /* ---------- clavier iOS : à la fermeture, la page peut rester décalée (iOS 26/27) ---------- */
 document.addEventListener('focusout', (e)=>{
   if (!e.target || !e.target.matches || !e.target.matches('input')) return;
@@ -1998,6 +2308,7 @@ if (window.visualViewport) visualViewport.addEventListener('resize', ()=>{ if (w
 
 /* ---------- démarrage ---------- */
 applyTheme();
+if (lockOn()) showLock('unlock'); else document.documentElement.classList.remove('locked');
 syncSettingsUI();
 showTab(S.tab, false);
 renderUpdate();
