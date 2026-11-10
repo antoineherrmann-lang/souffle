@@ -200,7 +200,7 @@ html.locked #scroll,html.locked .top,html.locked .tabbar-wrap,html.locked .toast
 .bar i{transition:width .8s cubic-bezier(.2,.8,.2,1)}
 .chart rect.cb{transform-box:fill-box;transform-origin:50% 100%;animation:grow .6s cubic-bezier(.2,.9,.3,1.1) both}
 .tl.now .tl-dot{animation:ring 2.2s ease-out infinite}
-.spend-amt,.goal-amt{transition:color .3s}
+.sp-v,.goal-amt{transition:color .3s}
 .welcome:not([hidden]){animation:cardIn .5s ease both}
 
 /* repousser / spéciale / cagnotte */
@@ -227,8 +227,12 @@ html[data-dg] .btn.wide{width:100%}
 .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:inherit;background:var(--grad-h);min-width:6px}
 .spend{padding:18px 20px 20px 24px}
-.spend-amt{margin-top:16px;font-size:40px;font-weight:500;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
-.spend-txt{margin-top:6px;font-size:15px;line-height:1.45;color:var(--ink2)}
+.spend-h{font-size:14px;color:var(--ink2)}
+.spend-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px;margin-top:14px}
+.sp-v{font-size:27px;font-weight:500;letter-spacing:-.025em;line-height:1.1;font-variant-numeric:tabular-nums}
+.sp-l{margin-top:4px;font-size:14px;font-weight:500}
+.sp-n{margin-top:1px;font-size:13px;color:var(--ink2)}
+.spend-note{margin-top:14px;font-size:12.5px;color:var(--ink3)}
 /* le trait dégradé de l’ancienne citation, réutilisé comme signature */
 .trait::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:3px;border-radius:0 3px 3px 0;
   background:linear-gradient(180deg,var(--sky),var(--sun),var(--coral))}
@@ -575,9 +579,14 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
     </div>
 
     <div class="card trait spend" id="spendCard">
-      <div class="seg-wrap"><div class="seg" id="spendSeg" data-glass-full aria-label="Période"><button data-v="day">Aujourd’hui</button><button data-v="7">7 jours</button><button data-v="30">30 jours</button><button data-v="all">Au total</button></div></div>
-      <div class="spend-amt" id="spendAmt">0,00 €</div>
-      <div class="spend-txt" id="spendTxt"></div>
+      <div class="spend-h">Dépensé en fumant</div>
+      <div class="spend-grid">
+        <div class="sp"><div class="sp-v" id="sp0">0,00 €</div><div class="sp-l">Aujourd’hui</div><div class="sp-n" id="spn0"></div></div>
+        <div class="sp"><div class="sp-v" id="sp1">0,00 €</div><div class="sp-l">7 derniers jours</div><div class="sp-n" id="spn1"></div></div>
+        <div class="sp"><div class="sp-v" id="sp2">0,00 €</div><div class="sp-l">30 derniers jours</div><div class="sp-n" id="spn2"></div></div>
+        <div class="sp"><div class="sp-v" id="sp3">0,00 €</div><div class="sp-l">Depuis le début</div><div class="sp-n" id="spn3"></div></div>
+      </div>
+      <div class="spend-note" id="spendNote" hidden>Les spéciales ne sont pas comptées.</div>
     </div>
 
     <div class="day-head">
@@ -905,7 +914,7 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 
     <h3 class="group-title">À propos</h3>
     <div class="group">
-      <div class="row"><div class="row-l"><div class="row-t">Souffle</div><div class="row-s">Souffle ne remplace pas un avis médical. Tes données restent sur ton téléphone.</div></div><div class="row-v" id="verAbout"></div></div>
+      <div class="row"><div class="row-l"><div class="row-t">Souffle</div><div class="row-s">Souffle ne remplace pas un avis médical. Tes données restent sur ton téléphone.</div><div class="row-s" id="scrLine" style="margin-top:6px;opacity:.7"></div></div><div class="row-v" id="verAbout"></div></div>
     </div>
     <p class="credit">App développée avec Claude - AH Studio - 2026</p>
   </div>
@@ -918,11 +927,15 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 (function(){
 'use strict';
 
-const APP_VERSION = '1.4.0';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.4.1';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.4.1', date:'10 novembre 2026', items:[
+    'Dépensé en fumant : les quatre montants visibles d’un coup (aujourd’hui, 7 jours, 30 jours, depuis le début)',
+    'Mesure de l’écran dans À propos, pour diagnostiquer la bande du bas'
+  ]},
   { v:'1.4.0', date:'10 novembre 2026', items:[
     'Dépensé en fumant : aujourd’hui, 7 jours, 30 jours et au total, sur l’accueil',
     'Respiration de 2 minutes par défaut, durée réglable, et particules qui suivent ton souffle',
@@ -1383,16 +1396,14 @@ let viewDay = 0;   // 0 = aujourd’hui, -1 = hier…
 
 /* ---------- dépensé en fumant ---------- */
 function renderSpend(st){
-  const v = S.spend || 'day', now = st.now, d0 = dayStart(now);
-  for (const b of $('spendSeg').querySelectorAll('button')) setOn(b, b.dataset.v === v);
-  const from = v === 'day' ? d0 : v === '7' ? addDays(d0, -6) : v === '30' ? addDays(d0, -29) : -Infinity;
-  const n = D.logs.filter(l=>l.t >= from && l.t <= now).length, eur = n * D.base.price / D.base.perPack;
-  const sp = D.specials.filter(t=>t >= from && t <= now).length;
-  countTo($('spendAmt'), eur, fmtEur);
-  const when = v === 'day' ? ' aujourd’hui' : v === '7' ? ' sur les 7 derniers jours' : v === '30' ? ' sur les 30 derniers jours' : ' depuis tes débuts avec Souffle, le ' + fmtDay(D.since);
-  let t = n ? 'dépensés en fumant ' + n + ' ' + pl(n, 'cigarette', 'cigarettes') + when + '.' : (v === 'day' ? 'Rien de parti en fumée aujourd’hui.' : 'Rien de parti en fumée' + when + '.');
-  if (sp) t += ' Les spéciales ne sont pas comptées.';
-  setText($('spendTxt'), t);
+  const now = st.now, d0 = dayStart(now), unit = D.base.price / D.base.perPack;
+  const ranges = [d0, addDays(d0, -6), addDays(d0, -29), -Infinity];
+  ranges.forEach((from, i)=>{
+    const n = D.logs.filter(l=>l.t >= from && l.t <= now).length;
+    countTo($('sp' + i), n * unit, fmtEur);
+    setText($('spn' + i), (n ? n + ' ' + pl(n, 'cigarette', 'cigarettes') : 'aucune cigarette') + (i === 3 ? ', depuis le ' + fmtDay(D.since, { day:'numeric', month:'short' }) : ''));
+  });
+  setHidden($('spendNote'), !D.specials.length);
 }
 /* ---------- Progrès ---------- */
 function renderProgress(st){
@@ -1960,10 +1971,6 @@ $('btnBrWin').addEventListener('click', ()=>{
 });
 $('btnBrLose').addEventListener('click', ()=>{ brSheet.set(false); setTimeout(logSmoke, 250); });
 
-$('spendSeg').addEventListener('click', (e)=>{
-  const b = e.target.closest('button'); if (!b) return;
-  S.spend = b.dataset.v; save(); render();
-});
 
 /* ---------- Progrès : période ---------- */
 $('rangeSeg').addEventListener('click', (e)=>{
@@ -2036,6 +2043,10 @@ $('btnClose').addEventListener('click', ()=>settingsSheet.set(false));
 
 function syncSettingsUI(){
   for (const b of $('brSeg').querySelectorAll('button')) setOn(b, +b.dataset.v === (S.brDur || 120));
+  { if (window.__fit) window.__fit();
+    const app = navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    const scr = Math.max(screen.width || 0, screen.height || 0);
+    setText($('scrLine'), 'Écran ' + scr + ', fenêtre ' + innerHeight + ', mode ' + (app ? 'app' : 'navigateur') + (document.documentElement.classList.contains('cut') ? ', bande iOS de ' + (scr - innerHeight) + ' px' : '') + '.'); }
   if (typeof syncLockUI === 'function') syncLockUI();
   themeBtns.forEach(b=>setOn(b, b.dataset.v === S.theme));
   setChecked(swGlass, S.glass !== false);
