@@ -31,6 +31,7 @@
     var land=innerWidth>innerHeight, sw=screen.width||0, sh=screen.height||0, scr=land?Math.min(sw,sh):Math.max(sw,sh);
     var cut=app&&scr-innerHeight>20;
     if(r.classList.contains('cut')!==cut) r.classList.toggle('cut',cut);
+    r.style.setProperty('--gap',(cut?scr-innerHeight:0)+'px');
   }
   fit(); window.__fit=fit;
   addEventListener('resize',fit); addEventListener('orientationchange',function(){ setTimeout(fit,300); });
@@ -80,10 +81,17 @@ html[data-theme="dark"]{
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:var(--bg-c);color:var(--ink);font-family:var(--font);font-size:16px;
+html,body{margin:0;min-height:100%;background:var(--bg-c);color:var(--ink);font-family:var(--font);font-size:16px;
   -webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;overscroll-behavior:none;touch-action:manipulation}
 html[data-theme="dark"],html[data-theme="dark"] body{background:#151515}
-body{position:fixed;inset:0;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body{position:relative;overflow-x:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* défilement bloqué sous les feuilles et écrans plein écran */
+html.noscroll,html.noscroll body,html.locked,html.locked body{overflow:hidden}
+.sheet-back,.lock{touch-action:none}
+.sheet-scroll{overscroll-behavior:contain}
+/* écrans sombres plein écran : la bande iOS prend leur couleur */
+html.locked,html.locked body,html.br-on,html.br-on body{background:#0e0e0e!important}
+html.br-on #scroll{visibility:hidden}
 button,input{font-family:inherit;color:inherit}
 input{-webkit-user-select:text;user-select:text}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -104,7 +112,7 @@ html[data-theme="dark"] .bg::after{opacity:.09}
 .top.scrolled .top-title{opacity:1}
 
 /* ---------- contenu ---------- */
-#scroll{position:fixed;inset:0;z-index:5;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+#scroll{position:relative;z-index:5;min-height:100vh;
   padding:calc(var(--safe-t) + var(--top-x) + 46px) 18px calc(var(--safe-b) + 128px)}
 .page{max-width:620px;margin:0 auto;animation:pageIn .28s ease both}
 @keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -437,7 +445,7 @@ html[data-theme="dark"] .seg button.on{background:rgba(255,255,255,.2);color:#ff
 
 /* mode app iOS : on recolle sur le bas réel de l’écran (--H mesurée au démarrage) */
 /* bande iOS : plus de marge d’indicateur quand la vue web est raccourcie */
-html.cut{--safe-b:0px}
+html.cut{--safe-b:0px;min-height:calc(100% + var(--gap,0px))}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -927,11 +935,15 @@ html[data-theme="dark"]{--lg-rim-opacity:.3;--lg-glow:rgb(255 255 255 / .06);--l
 (function(){
 'use strict';
 
-const APP_VERSION = '1.4.1';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.5.0';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.5.0', date:'10 novembre 2026', items:[
+    'Bas de l’écran iPhone : la page défile désormais jusqu’au vrai bas de l’écran, sous la barre d’onglets',
+    'Écrans de respiration et de verrouillage sombres jusqu’en bas'
+  ]},
   { v:'1.4.1', date:'10 novembre 2026', items:[
     'Dépensé en fumant : les quatre montants visibles d’un coup (aujourd’hui, 7 jours, 30 jours, depuis le début)',
     'Mesure de l’écran dans À propos, pour diagnostiquer la bande du bas'
@@ -1276,7 +1288,7 @@ function showTab(i, persist){
   i = clamp(i | 0, 0, TABS.length - 1);
   TABS.forEach((t, k)=>{ setHidden(pages[k], k !== i); setOn(tabBtns[k], k === i); tabBtns[k].setAttribute('aria-current', k === i ? 'page' : 'false'); });
   setText(topTitle, TABS[i].label);
-  scroller.scrollTop = 0;
+  window.scrollTo(0, 0);
   S.tab = i; if (persist !== false) save();
   if (TABS[i].id === 'plan' && !D.onboarded){ D.onboarded = true; saveD(); }
   render();
@@ -1284,13 +1296,13 @@ function showTab(i, persist){
 tabbar.addEventListener('click', (e)=>{
   const b = e.target.closest('button'); if (!b || !tabbar.contains(b)) return;
   const i = +b.dataset.i;
-  if (i === S.tab) { scroller.scrollTo({ top:0, behavior:'smooth' }); return; }
+  if (i === S.tab) { window.scrollTo({ top:0, behavior:'smooth' }); return; }
   showTab(i);
 });
 let ticking = false;
-scroller.addEventListener('scroll', ()=>{
+window.addEventListener('scroll', ()=>{
   if (ticking) return; ticking = true;
-  requestAnimationFrame(()=>{ ticking = false; const s = scroller.scrollTop > 44; if (top.classList.contains('scrolled') !== s) top.classList.toggle('scrolled', s); });
+  requestAnimationFrame(()=>{ ticking = false; const s = (window.scrollY || document.documentElement.scrollTop) > 44; if (top.classList.contains('scrolled') !== s) top.classList.toggle('scrolled', s); });
 }, { passive:true });
 
 /* ============================================================
@@ -1584,6 +1596,7 @@ const overlays = [];
 function syncInert(){
   const any = overlays.length > 0;
   scroller.inert = any; $('tabwrap').inert = any; top.inert = any;
+  if (document.documentElement.classList.contains('noscroll') !== any) document.documentElement.classList.toggle('noscroll', any);
 }
 function makeSheet(el, back, bar, onClose){
   const o = { el, open:false };
@@ -1893,12 +1906,12 @@ const BR_CYCLE = 10000;
 const brTotal = ()=>(S.brDur || 120) * 1000;
 const br = $('breathe');
 let brT0 = 0, brTimer = null;
-const brSheet = makeSheet(br, null, null, ()=>{ br.classList.remove('run'); clearInterval(brTimer); brTimer = null; cancelAnimationFrame(fx.raf); fx.raf = 0; applyTheme(); });
+const brSheet = makeSheet(br, null, null, ()=>{ document.documentElement.classList.remove('br-on'); br.classList.remove('run'); clearInterval(brTimer); brTimer = null; cancelAnimationFrame(fx.raf); fx.raf = 0; applyTheme(); });
 function openBreathe(){
   const pool = D.reasons.length ? D.reasons.map(r=>'Rappelle-toi : ' + r.charAt(0).toLowerCase() + r.slice(1) + (/[.!?…]$/.test(r) ? '' : '.')) : MSG.day.slice(0, 6);
   setText($('brReason'), pick(pool));
   setText($('brHint'), 'Suis le cœur : il gonfle, tu inspires. Il dégonfle, tu expires.');
-  brSheet.set(true);
+  brSheet.set(true); document.documentElement.classList.add('br-on');
   const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.setAttribute('content', '#121212');
   br.classList.remove('run'); void br.offsetWidth; br.classList.add('run');   // relance l’animation au début du cycle
   brT0 = Date.now(); brPhase = ''; tickBreathe();
@@ -2311,7 +2324,6 @@ document.addEventListener('focusout', (e)=>{
   if (!e.target || !e.target.matches || !e.target.matches('input')) return;
   setTimeout(()=>{
     if (document.activeElement && document.activeElement.matches && document.activeElement.matches('input')) return;
-    try { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; } catch(err){}
     if (window.__fit) window.__fit();
   }, 80);
 });
