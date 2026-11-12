@@ -179,13 +179,47 @@ html.intro-on,html.intro-on body{overflow:hidden}
 .slide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;text-align:center;min-height:0;overflow-y:auto}
 .slide h2{margin:26px 0 0;font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
 .slide p{margin:12px auto 0;max-width:340px;font-size:16.5px;line-height:1.5;color:var(--ink2)}
-.slide.setup{justify-content:flex-start;padding-top:12px}
-.slide.setup h2{margin-top:6px}
-.intro-form{width:100%;max-width:420px;margin-top:22px;text-align:left}
+.slide.q{justify-content:flex-start;padding-top:max(8px,4vh)}
+.slide.q h2{margin-top:6px;max-width:360px}
+.q-step{font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--accent)}
+.q-sub{margin:26px 0 10px;font-size:14px;color:var(--ink2)}
+.q-note{margin-top:12px;font-size:13.5px;color:var(--ink2);max-width:320px;line-height:1.45}
+.bigstep{display:flex;align-items:center;justify-content:center;gap:22px;margin-top:34px}
+.bigstep .btn.ib{width:58px;height:58px;border-radius:29px}
+html[data-dg] .bigstep .btn.ib{width:58px}
+.bs-v{display:flex;flex-direction:column;align-items:center;min-width:110px}
+.bs-v .num{font-size:68px;font-weight:500;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.bs-v small{margin-top:4px;font-size:14px;color:var(--ink2)}
+.bigstep.sm{margin-top:4px;gap:18px}
+.bigstep.sm .btn.ib{width:46px;height:46px;border-radius:23px}
+html[data-dg] .bigstep.sm .btn.ib{width:46px}
+.bigstep.sm .bs-v .num{font-size:40px}
+.bigstep.sm .bs-v{min-width:80px}
+.bs-v .num.tick{animation:tick .45s cubic-bezier(.2,.9,.3,1.3)}
+.price-big{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:30px}
+.price-big input{width:170px;border:0;background:none;text-align:right;font:500 64px/1 var(--font);letter-spacing:-.04em;color:var(--ink);outline:none;padding:0;
+  border-bottom:2px solid var(--hair);transition:border-color .2s}
+.price-big input:focus{border-color:var(--accent)}
+.price-big span{font-size:40px;font-weight:500;color:var(--ink2)}
+.chips.center{justify-content:center;margin-top:18px}
+.choices{display:flex;flex-direction:column;gap:12px;width:100%;max-width:380px;margin-top:26px}
+.choice{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:16px 18px;border:0;border-radius:22px;text-align:left;cursor:pointer;font-family:var(--font);color:var(--ink);
+  background:var(--card);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:inset 0 0 0 1px var(--glass-line),0 8px 22px rgba(0,0,0,.08);
+  transition:box-shadow .25s,transform .15s,background .25s}
+.choice b{font-size:18px;font-weight:600}
+.choice span{font-size:14px;line-height:1.4;color:var(--ink2)}
+.choice:active{transform:scale(.98)}
+.choice.on{box-shadow:inset 0 0 0 2px var(--accent),0 10px 26px rgba(189,98,86,.18);background:var(--card-strong)}
+.choice.on b{color:var(--accent)}
+.ob-date{margin-top:2px;width:190px;text-align:center}
+.vis.small{height:min(40vw,170px);width:min(50vw,200px)}
+.sum{margin-top:18px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.sum div{padding:14px 18px;border-radius:20px;background:var(--card);box-shadow:inset 0 0 0 1px var(--glass-line);font-size:15px;line-height:1.45}
+.sum b{font-weight:600}
 .intro-foot{display:flex;flex-direction:column;align-items:center;gap:18px;padding:12px 24px 0}
 .intro-foot .btn{width:100%;max-width:420px}
 html[data-dg] .intro-foot .btn{width:100%;max-width:420px}
-.intro-dots{display:flex;gap:8px}
+.intro-dots{display:flex;gap:6px}
 .intro-dots i{width:7px;height:7px;border-radius:4px;background:var(--ink3);transition:width .35s cubic-bezier(.2,.8,.2,1),background .35s}
 .intro-dots i.on{width:22px;background:var(--accent)}
 /* visuels */
@@ -292,7 +326,7 @@ html.locked #scroll,html.locked .top,html.locked .tabbar-wrap,html.locked .toast
 .sp-v,.goal-amt{transition:color .3s}
 .welcome:not([hidden]){animation:cardIn .5s ease both}
 
-/* repousser / spéciale / cagnotte */
+/* repousser / autres / cagnotte */
 .duo2{display:flex;gap:10px;margin-top:10px}
 .duo2 .btn{flex:1;min-width:0}
 html[data-dg] .duo2 .btn{flex:1;min-width:0}
@@ -638,7 +672,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
         <svg class="v-heart breathe-demo" viewBox="-2 -2 104 94" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7" stroke-linejoin="round"/></svg>
         <div class="v-word">Inspire</div>
       </div>
-      <h2>Une envie ? On respire.</h2>
+      <h2>Une envie ? On respire.</h2>
       <p>« J’ai une envie » lance une respiration guidée. Une envie monte puis redescend en quelques minutes : le cœur t’accompagne pendant qu’elle passe.</p>
     </article>
     <article class="slide">
@@ -651,20 +685,40 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       <h2>Vois ce que tu gagnes</h2>
       <p>Argent économisé, cigarettes évitées, temps de vie préservé, et ce que ton corps récupère heure après heure.</p>
     </article>
-    <article class="slide setup">
-      <h2>Ton point de départ</h2>
-      <p>Pour des calculs justes. Tu pourras tout changer plus tard dans Plan.</p>
-      <div class="group intro-form">
-        <div class="row"><div class="row-l"><div class="row-t">Cigarettes par jour</div><div class="row-s">Avant Souffle</div></div><div class="stepper"><button class="btn ib" data-ob="perDay" data-d="-1" data-glass-icon aria-label="Une de moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><span class="stv" id="obPerDay">3</span><button class="btn ib" data-ob="perDay" data-d="1" data-glass-icon aria-label="Une de plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div></div>
-        <div class="row"><div class="row-l"><div class="row-t">Prix du paquet</div><div class="row-s">En euros, 20 cigarettes</div></div><input class="inp price" id="obPrice" type="text" inputmode="decimal" aria-label="Prix du paquet en euros"></div>
-        <div class="row stack"><div class="row-t">Ton objectif</div><div class="seg" id="obMode" data-glass-full aria-label="Objectif"><button data-v="reduce">Réduire</button><button data-v="quit">Arrêter</button></div></div>
-        <div class="row" id="obLimitRow"><div class="row-l"><div class="row-t">Maximum par jour</div><div class="row-s">Pour commencer</div></div><div class="stepper"><button class="btn ib" data-ob="limit" data-d="-1" data-glass-icon aria-label="Une de moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><span class="stv" id="obLimit">2</span><button class="btn ib" data-ob="limit" data-d="1" data-glass-icon aria-label="Une de plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div></div>
-        <div class="row"><div class="row-l"><div class="row-t">Cigarettes spéciales</div><div class="row-s">Un compteur à part, hors objectif et hors économies</div></div><span class="sw"><input type="checkbox" id="obSpec" aria-label="Cigarettes spéciales"><i></i></span></div>
+    <article class="slide q">
+      <div class="q-step">Question 1 sur 3</div>
+      <h2>Combien de cigarettes fumes-tu par jour ?</h2>
+      <p>En ce moment, en moyenne. C’est la base de tous les calculs : économies, cigarettes évitées, temps de vie.</p>
+      <div class="bigstep"><button class="btn ib" data-ob="perDay" data-d="-1" data-glass-icon aria-label="Moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><div class="bs-v"><span class="num" id="obPerDay">0</span><small>par jour</small></div><button class="btn ib" data-ob="perDay" data-d="1" data-glass-icon aria-label="Plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div>
+    </article>
+    <article class="slide q">
+      <div class="q-step">Question 2 sur 3</div>
+      <h2>Combien coûte ton paquet ?</h2>
+      <p>Le prix que tu paies vraiment.</p>
+      <div class="price-big"><input class="num" id="obPrice" type="text" inputmode="decimal" aria-label="Prix du paquet en euros"><span>€</span></div>
+      <div class="chips center" id="obPriceChips"><button class="chip" data-p="12">12 €</button><button class="chip" data-p="12.5">12,50 €</button><button class="chip" data-p="13">13 €</button><button class="chip" data-p="13.5">13,50 €</button><button class="chip" data-p="14">14 €</button></div>
+      <div class="q-sub">Cigarettes dans ton paquet</div>
+      <div class="bigstep sm"><button class="btn ib" data-ob="perPack" data-d="-1" data-glass-icon aria-label="Moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><div class="bs-v"><span class="num" id="obPerPack">0</span><small>cigarettes</small></div><button class="btn ib" data-ob="perPack" data-d="1" data-glass-icon aria-label="Plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div>
+    </article>
+    <article class="slide q">
+      <div class="q-step">Question 3 sur 3</div>
+      <h2>Quel est ton objectif ?</h2>
+      <p>Tu pourras changer d’avis à tout moment.</p>
+      <div class="choices" id="obMode">
+        <button class="choice" data-v="reduce"><b>Réduire</b><span>Un maximum par jour, que tu baisses à ton rythme</span></button>
+        <button class="choice" data-v="quit"><b>Arrêter</b><span>Une date, puis Souffle compte tes jours sans fumer</span></button>
       </div>
+      <div id="obReduce"><div class="q-sub">Maximum par jour pour commencer</div><div class="bigstep sm"><button class="btn ib" data-ob="limit" data-d="-1" data-glass-icon aria-label="Moins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg></button><div class="bs-v"><span class="num" id="obLimit">0</span><small>par jour</small></div><button class="btn ib" data-ob="limit" data-d="1" data-glass-icon aria-label="Plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button></div><div class="q-note" id="obWeekNote"></div></div>
+      <div id="obQuit" hidden><div class="q-sub">Date d’arrêt</div><input class="inp date ob-date" type="date" id="obQuitDate" aria-label="Date d’arrêt"></div>
+    </article>
+    <article class="slide q">
+      <div class="vis small"><div class="v-halo"></div><svg class="v-heart big" viewBox="-2 -2 104 94" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7" stroke-linejoin="round"/></svg></div>
+      <h2>Ton plan est prêt</h2>
+      <div class="sum" id="obSum"></div>
     </article>
   </div>
   <div class="intro-foot">
-    <div class="intro-dots" id="introDots"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="intro-dots" id="introDots"></div>
     <button class="btn primary big" id="introNext">Suivant</button>
   </div>
 </section>
@@ -760,7 +814,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
         <div class="sp"><div class="sp-v" id="sp2">0,00 €</div><div class="sp-l">30 derniers jours</div><div class="sp-n" id="spn2"></div></div>
         <div class="sp"><div class="sp-v" id="sp3">0,00 €</div><div class="sp-l">Depuis le début</div><div class="sp-n" id="spn3"></div></div>
       </div>
-      <div class="spend-note" id="spendNote" hidden>Les spéciales ne sont pas comptées.</div>
+      <div class="spend-note" id="spendNote" hidden>Les « autres » ne sont pas comptées.</div>
     </div>
 
     <div class="day-head">
@@ -913,12 +967,12 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       </div>
     </div>
 
-    <h2 class="sec">Cigarettes spéciales</h2>
-    <p class="sec-sub">Un compteur à part, pour une consommation que tu veux suivre séparément. Les spéciales n’entrent ni dans ton objectif, ni dans tes économies.</p>
+    <h2 class="sec">Autres</h2>
+    <p class="sec-sub">Un compteur à part, pour ce que tu veux suivre séparément. Les « autres » n’entrent ni dans ton objectif, ni dans tes économies.</p>
     <div class="group">
       <div class="row">
-        <div class="row-l"><div class="row-t">Activer les spéciales</div><div class="row-s">Ajoute le choix « Spéciale » quand tu notes une cigarette</div></div>
-        <span class="sw"><input type="checkbox" id="swSpecOn" aria-label="Activer les spéciales"><i></i></span>
+        <div class="row-l"><div class="row-t">Activer « Autres »</div><div class="row-s">Ajoute le choix « Autre » quand tu notes une cigarette</div></div>
+        <span class="sw"><input type="checkbox" id="swSpecOn" aria-label="Activer Autres"><i></i></span>
       </div>
       <div class="row" id="rowSpecMax">
         <div class="row-l"><div class="row-t">Maximum par semaine</div><div class="row-s" id="specInfo"></div></div>
@@ -926,7 +980,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       </div>
       <div class="row" id="rowSpecH">
         <div class="row-l"><div class="row-t">Compter pour les bienfaits</div><div class="row-s">La fumée compte aussi pour la récupération de ton corps</div></div>
-        <span class="sw"><input type="checkbox" id="swSpecH" aria-label="Compter les spéciales pour les bienfaits"><i></i></span>
+        <span class="sw"><input type="checkbox" id="swSpecH" aria-label="Compter les autres pour les bienfaits"><i></i></span>
       </div>
     </div>
 
@@ -953,7 +1007,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
     <button class="btn primary" id="btnLogDone">OK</button>
   </div>
   <div class="sheet-scroll">
-    <div class="type-wrap" id="logTypeWrap"><div class="seg type-seg" id="logType" data-glass-full aria-label="Type de cigarette"><button data-v="log" class="on">Classique</button><button data-v="spec">Spéciale</button></div></div>
+    <div class="type-wrap" id="logTypeWrap"><div class="seg type-seg" id="logType" data-glass-full aria-label="Type de cigarette"><button data-v="log" class="on">Classique</button><button data-v="spec">Autre</button></div></div>
     <p class="log-msg" id="logMsg"></p>
     <div id="logTrig">
       <p class="log-q">Qu’est-ce qui t’a donné envie ?</p>
@@ -972,7 +1026,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
     <button class="btn primary" id="btnEditSave">Enregistrer</button>
   </div>
   <div class="sheet-scroll">
-    <div class="type-wrap" id="editTypeWrap"><div class="seg type-seg" id="editType" data-glass-full aria-label="Type de cigarette"><button data-v="log" class="on">Classique</button><button data-v="spec">Spéciale</button></div></div>
+    <div class="type-wrap" id="editTypeWrap"><div class="seg type-seg" id="editType" data-glass-full aria-label="Type de cigarette"><button data-v="log" class="on">Classique</button><button data-v="spec">Autre</button></div></div>
     <div class="group">
       <div class="row"><div class="row-l"><div class="row-t">Heure</div></div><input class="inp time" type="time" id="editTime" aria-label="Heure"></div>
       <div class="row"><div class="row-l"><div class="row-t">Jour</div></div><input class="inp date" type="date" id="editDate" aria-label="Jour"></div>
@@ -1108,11 +1162,18 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
 (function(){
 'use strict';
 
-const APP_VERSION = '1.7.0';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.7.2';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.7.2', date:'10 novembre 2026', items:[
+    'Les « spéciales » s’appellent désormais « Autres »',
+    'Présentation : la question sur les autres est retirée (l’option reste dans Plan)'
+  ]},
+  { v:'1.7.1', date:'10 novembre 2026', items:[
+    'Présentation : une question par écran (consommation, prix et paquet, objectif, spéciales) et un récapitulatif chiffré de ton plan'
+  ]},
   { v:'1.7.0', date:'10 novembre 2026', items:[
     'Présentation au premier lancement : 4 écrans animés, puis ton point de départ',
     'Les spéciales deviennent une option, désactivée par défaut (Plan → Cigarettes spéciales)',
@@ -1312,6 +1373,7 @@ const esc = (s)=>String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;', '<':'&lt;', '>
 const pl = (n, one, many)=>(Math.abs(n) >= 2 ? many : one);
 const pick = (arr, seed)=>arr[Math.abs(seed == null ? Math.floor(Math.random() * 1e6) : seed) % arr.length];
 const fmtInt = (n)=>new Intl.NumberFormat('fr-FR').format(Math.round(n));
+const fmtEur0 = (n)=>new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR', maximumFractionDigits:0 }).format(n);
 const fmtEur = (n)=>new Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR' }).format(n);
 const fmtDec = (n)=>new Intl.NumberFormat('fr-FR', { maximumFractionDigits:1 }).format(n);
 function dayKey(ts){ const d = new Date(ts); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -1556,7 +1618,7 @@ function renderToday(st){
       sub += wl >= 0 ? ' Cette semaine : ' + st.nWeek + ' sur ' + wm + '.' : ' Cette semaine : ' + st.nWeek + ' sur ' + wm + ', au-dessus de ton maximum.';
     }
   }
-  if (D.spec.on && st.specToday) sub += ' Et ' + st.specToday + ' ' + pl(st.specToday, 'spéciale', 'spéciales') + ', à part.';
+  if (D.spec.on && st.specToday) sub += ' Et ' + st.specToday + ' ' + pl(st.specToday, 'autre', 'autres') + ', à part.';
   rollNum($('heroN'), N); setText($('heroL'), L); setText($('heroSub'), sub);
   /* budget en pastilles */
   let h = '';
@@ -1565,7 +1627,7 @@ function renderToday(st){
     const fresh = renderToday.prevN != null && n > renderToday.prevN ? n - 1 : -1;
     for (let i = 0; i < shown; i++) h += '<i class="' + (i < n ? (i < lim ? 'used' : 'over') : '') + (i === fresh ? ' new' : '') + '"></i>';
   }
-  /* spéciales du jour : pastilles bleues, à part de l’objectif */
+  /* « autres » du jour : pastilles bleues, à part de l’objectif */
   const spN = D.spec.on ? st.specToday || 0 : 0;
   if (spN){
     if (h) h += '<b class="sep"></b>';
@@ -1575,7 +1637,7 @@ function renderToday(st){
   setHTML($('budget'), h); renderToday.prevN = n; renderToday.prevS = spN;
 
   /* depuis la dernière */
-  setText($('sinceL'), st.last == null ? 'Sans cigarette notée depuis' : D.specials.indexOf(st.last) >= 0 && !D.logs.some(l=>l.t === st.last) ? 'Depuis ta dernière spéciale' : 'Depuis ta dernière cigarette');
+  setText($('sinceL'), st.last == null ? 'Sans cigarette notée depuis' : D.specials.indexOf(st.last) >= 0 && !D.logs.some(l=>l.t === st.last) ? 'Depuis ta dernière cigarette « autre »' : 'Depuis ta dernière cigarette');
   setText($('sinceT'), fmtDur(st.gap));
   let ss;
   if (st.last == null) ss = 'Note chaque cigarette pour suivre tes pauses.';
@@ -1613,7 +1675,7 @@ function renderToday(st){
   renderToday.seenInit = true;
   setHTML($('todayList'), items.length ? items.map(it=>
     '<div class="row' + (it.fresh ? ' enter' : '') + (editable(it.kind) ? ' edit" data-edit="' + it.kind + ':' + it.t + '" role="button" tabindex="0" aria-label="Modifier cette cigarette' : '') + '"><span class="time">' + fmtTime(it.t) + '</span><div class="row-l"><span class="tag"><span class="dot' + (it.kind === 'spec' ? ' spec' : it.kind !== 'log' ? ' win' : '') + '"></span>' +
-    (it.kind === 'win' ? 'Envie surmontée' : it.kind === 'delay' ? 'Cigarette repoussée de 10 min' : it.kind === 'spec' ? 'Spéciale' : (it.k ? 'Cigarette, ' + TRIG_L[it.k].toLowerCase() : 'Cigarette')) + '</span></div>' +
+    (it.kind === 'win' ? 'Envie surmontée' : it.kind === 'delay' ? 'Cigarette repoussée de 10 min' : it.kind === 'spec' ? 'Autre' : (it.k ? 'Cigarette, ' + TRIG_L[it.k].toLowerCase() : 'Cigarette')) + '</span></div>' +
     '<button class="x" data-del="' + it.kind + ':' + it.t + '" aria-label="Supprimer">' + ICONS.x + '</button></div>').join('')
     : '<div class="row empty-row">' + (viewDay === 0 ? 'Rien de noté pour l’instant. Quand une envie arrive, touche « J’ai une envie » : on respire ensemble.' : 'Rien de noté ce jour-là. Un oubli ? Ajoute-le ci-dessous.') + '</div>');
 }
@@ -1657,7 +1719,7 @@ function renderProgress(st){
     ['Temps de vie préservé', fmtLife(st.lifeMin), 'Estimation'],
     ['Envies surmontées', fmtInt(st.cravings), st.cravings ? 'Autant de fois où l’envie est passée' : 'Touche « J’ai une envie » quand ça arrive'],
     ['Cette semaine', st.nWeek + (D.plan.weekOn ? ' / ' + D.plan.weekMax : ''), 'Du lundi ' + fmtDay(weekStart(st.now)) + ' à aujourd’hui'],
-    ...(D.spec.on ? [['Spéciales cette semaine', st.specWeek + (D.spec.max ? ' / ' + D.spec.max : ''), st.specials ? 'En moyenne ' + fmtDec(countIn(D.specials, addDays(weekStart(st.now), -28), weekStart(st.now)) / 4) + ' par semaine sur les 4 dernières' : 'Hors objectif et hors économies']] : []),
+    ...(D.spec.on ? [['Autres cette semaine', st.specWeek + (D.spec.max ? ' / ' + D.spec.max : ''), st.specials ? 'En moyenne ' + fmtDec(countIn(D.specials, addDays(weekStart(st.now), -28), weekStart(st.now)) / 4) + ' par semaine sur les 4 dernières' : 'Hors objectif et hors économies']] : []),
     ['Cigarettes repoussées', fmtInt(st.delays), st.delays ? 'Dix minutes tenues à chaque fois' : 'Touche « Repousser de 10 minutes » sur Aujourd’hui'],
     ['Jours sous l’objectif', fmtInt(st.under), st.streak ? 'Série en cours : ' + st.streak + ' ' + pl(st.streak, 'jour', 'jours') : 'Les jours se comptent une fois terminés'],
     ['Plus longue pause', fmtDur(st.record), '']
@@ -1857,8 +1919,8 @@ let lastLog = null, lastType = 'log', lastMsg = '';
 const logType = $('logType');
 function specMsg(){
   const st = stats(), mx = D.spec.max, n = st.specWeek;
-  let m = 'Spéciale notée. Elle ne compte ni dans ton objectif, ni dans tes économies.';
-  if (mx > 0) m = 'Spéciale notée. ' + (n < mx ? 'Cette semaine : ' + n + ' sur ' + mx + '.' : n === mx ? 'Tu atteins ton maximum de la semaine (' + mx + ').' : 'Au-dessus de ton maximum de la semaine : ' + n + ' sur ' + mx + '. Pas de jugement, on fait le point lundi.');
+  let m = 'Notée dans « Autres ». Elle ne compte ni dans ton objectif, ni dans tes économies.';
+  if (mx > 0) m = 'Notée dans « Autres ». ' + (n < mx ? 'Cette semaine : ' + n + ' sur ' + mx + '.' : n === mx ? 'Tu atteins ton maximum de la semaine (' + mx + ').' : 'Au-dessus de ton maximum de la semaine : ' + n + ' sur ' + mx + '. Pas de jugement, on fait le point lundi.');
   return m;
 }
 function syncLogType(){
@@ -1866,7 +1928,7 @@ function syncLogType(){
   for (const b of logType.querySelectorAll('button')) setOn(b, b.dataset.v === lastType);
   setHidden($('logTrig'), lastType === 'spec');
 }
-/* passe la cigarette qu’on vient de noter de classique à spéciale, ou l’inverse */
+/* passe la cigarette qu’on vient de noter de classique à « autre », ou l’inverse */
 logType.addEventListener('click', (e)=>{
   const b = e.target.closest('button'); if (!b || !lastLog || b.dataset.v === lastType) return;
   if (b.dataset.v === 'spec'){
@@ -2106,7 +2168,7 @@ $('todayList').addEventListener('click', (e)=>{
   } else if (kind === 'spec') {
     const i = D.specials.indexOf(t); if (i < 0) return;
     D.specials.splice(i, 1); saveD(); render();
-    toast('Spéciale supprimée.', ()=>{ D.specials.push(t); D.specials.sort((a,b)=>a - b); saveD(); render(); });
+    toast('Cigarette « autre » supprimée.', ()=>{ D.specials.push(t); D.specials.sort((a,b)=>a - b); saveD(); render(); });
   } else if (kind === 'delay') {
     const i = D.delays.indexOf(t); if (i < 0) return;
     D.delays.splice(i, 1); saveD(); render();
@@ -2275,7 +2337,7 @@ $('page-plan').addEventListener('click', (e)=>{
   haptic(); touchPlan();
 });
 $('swWeek').addEventListener('change', ()=>{ D.plan.weekOn = $('swWeek').checked; touchPlan(); });
-$('swSpecOn').addEventListener('change', ()=>{ D.spec.on = $('swSpecOn').checked; touchPlan(); toast(D.spec.on ? 'Spéciales activées : choisis « Spéciale » en notant une cigarette.' : 'Spéciales désactivées. Celles déjà notées sont conservées.'); });
+$('swSpecOn').addEventListener('change', ()=>{ D.spec.on = $('swSpecOn').checked; touchPlan(); toast(D.spec.on ? '« Autres » activé : choisis « Autre » en notant une cigarette.' : '« Autres » désactivé. Ce qui a déjà été noté est conservé.'); });
 $('swSpecH').addEventListener('change', ()=>{ D.spec.health = $('swSpecH').checked; touchPlan(); });
 swStep.addEventListener('change', ()=>{ const tk = dayKey(Date.now()); D.plan.limit = limitFor(tk); D.plan.autoStep = swStep.checked; D.plan.stepFrom = tk; touchPlan(); });
 quitInp.addEventListener('change', ()=>{ D.plan.quitDate = quitInp.value || ''; touchPlan(); });
@@ -2307,7 +2369,7 @@ function syncSettingsUI(){
   themeBtns.forEach(b=>setOn(b, b.dataset.v === S.theme));
   setChecked(swGlass, S.glass !== false);
   setChecked(swAuto, S.autoUpdate !== false);
-  setText($('dataInfo'), D.logs.length + ' ' + pl(D.logs.length, 'cigarette notée', 'cigarettes notées') + ', ' + D.specials.length + ' ' + pl(D.specials.length, 'spéciale', 'spéciales') + ', ' + D.cravings.length + ' ' + pl(D.cravings.length, 'envie surmontée', 'envies surmontées') + ', depuis le ' + fmtDay(D.since) + '.');
+  setText($('dataInfo'), D.logs.length + ' ' + pl(D.logs.length, 'cigarette notée', 'cigarettes notées') + ', ' + D.specials.length + ' ' + pl(D.specials.length, 'autre', 'autres') + ', ' + D.cravings.length + ' ' + pl(D.cravings.length, 'envie surmontée', 'envies surmontées') + ', depuis le ' + fmtDay(D.since) + '.');
 }
 $('brSeg').addEventListener('click', (e)=>{
   const b = e.target.closest('button'); if (!b) return;
@@ -2565,58 +2627,79 @@ document.addEventListener('visibilitychange', ()=>{
 /* ============================================================
    Présentation : affichée une seule fois (et sur demande depuis les Réglages)
    ============================================================ */
-const intro = $('intro'), introTrack = $('introTrack'), introDots = Array.from($('introDots').children);
-const OB = { perDay:3, price:13, mode:'reduce', limit:2, spec:false, i:0 };
+const intro = $('intro'), introTrack = $('introTrack'), slides = Array.from(introTrack.children);
+$('introDots').innerHTML = slides.map(()=>'<i></i>').join('');
+const introDots = Array.from($('introDots').children);
+const FIRST_Q = slides.findIndex(x=>x.classList.contains('q'));
+const OB = { perDay:3, price:13, perPack:20, mode:'reduce', limit:2, quitDate:'' };
 function introIndex(){ return Math.round(introTrack.scrollLeft / Math.max(1, introTrack.clientWidth)); }
+function obPriceRead(){ const v = parseFloat(String($('obPrice').value).replace(',', '.').replace(/[^\d.]/g, '')); if (Number.isFinite(v) && v > 0) OB.price = clamp(Math.round(v * 100) / 100, 0.5, 100); }
 function syncIntro(){
-  const i = introIndex(); OB.i = i;
+  const i = introIndex(), last = slides.length - 1;
   introDots.forEach((d, k)=>setOn(d, k === i));
-  setText($('introNext'), i === introDots.length - 1 ? 'C’est parti' : 'Suivant');
-  setHidden($('introSkip'), i === introDots.length - 1);
-  setText($('obPerDay'), String(OB.perDay)); setText($('obLimit'), String(OB.limit));
+  setText($('introNext'), i === last ? 'C’est parti' : i >= FIRST_Q ? 'Continuer' : 'Suivant');
+  setHidden($('introSkip'), i >= FIRST_Q);
+  setText($('obPerDay'), String(OB.perDay)); setText($('obPerPack'), String(OB.perPack)); setText($('obLimit'), String(OB.limit));
   if (document.activeElement !== $('obPrice')) $('obPrice').value = OB.price.toFixed(2).replace('.', ',');
-  for (const b of $('obMode').querySelectorAll('button')) setOn(b, b.dataset.v === OB.mode);
-  setHidden($('obLimitRow'), OB.mode === 'quit');
-  setChecked($('obSpec'), OB.spec);
+  for (const c of $('obPriceChips').children) setOn(c, Math.abs(+c.dataset.p - OB.price) < 0.001);
+  for (const b of $('obMode').children) setOn(b, b.dataset.v === OB.mode);
+  setHidden($('obReduce'), OB.mode !== 'reduce'); setHidden($('obQuit'), OB.mode !== 'quit');
+  if ($('obQuitDate').value !== OB.quitDate) $('obQuitDate').value = OB.quitDate;
+  $('obQuitDate').min = dayKey(Date.now());
+  setText($('obWeekNote'), OB.limit < OB.perDay ? 'Soit ' + (OB.perDay - OB.limit) + ' de moins par jour, et ' + OB.limit * 7 + ' maximum par semaine.' : 'Commence au même niveau qu’aujourd’hui, tu baisseras ensuite.');
+  /* récapitulatif */
+  const unit = OB.price / OB.perPack, year = OB.perDay * 365 * unit, life = OB.perDay * 365 * LIFE_MIN / 1440;
+  const saveY = OB.mode === 'quit' ? year : (OB.perDay - OB.limit) * 365 * unit;
+  let h = '<div>Aujourd’hui : <b>' + OB.perDay + ' ' + pl(OB.perDay, 'cigarette', 'cigarettes') + ' par jour</b>, soit environ <b>' + fmtEur0(year) + ' par an</b> et ' + fmtInt(life) + ' jours d’espérance de vie.</div>';
+  if (OB.mode === 'quit') h += '<div>Ton objectif : <b>arrêter' + (OB.quitDate ? ' le ' + fmtDay(keyTs(OB.quitDate), { weekday:'long', day:'numeric', month:'long' }) : '') + '</b>. Sur un an, ce sont <b>' + fmtEur0(saveY) + '</b> qui restent dans ta poche.</div>';
+  else h += '<div>Ton objectif : <b>' + OB.limit + ' maximum par jour</b>' + (saveY > 0 ? '. Sur un an, ça fait déjà <b>' + fmtEur0(saveY) + '</b> d’économisés.' : '. Tu pourras le baisser dans Plan.') + '</div>';
+  h += '<div>Une envie ? Touche <b>« J’ai une envie »</b> : on respire ensemble.</div>';
+  setHTML($('obSum'), h);
 }
 function showIntro(){
-  OB.perDay = D.base.perDay; OB.price = D.base.price; OB.mode = D.plan.mode;
-  OB.limit = Math.min(D.plan.limit, D.base.perDay); OB.spec = D.spec.on;
+  OB.perDay = D.base.perDay; OB.price = D.base.price; OB.perPack = D.base.perPack; OB.mode = D.plan.mode;
+  OB.limit = Math.min(limitFor(dayKey(Date.now())), D.base.perDay); OB.quitDate = D.plan.quitDate || dayKey(Date.now());
   intro.classList.remove('out'); intro.setAttribute('aria-hidden', 'false');
   document.documentElement.classList.add('intro-on');
   introTrack.scrollLeft = 0; syncIntro();
 }
 function goSlide(i){ introTrack.scrollTo({ left:i * introTrack.clientWidth, behavior:reducedMotion() ? 'auto' : 'smooth' }); }
-function finishIntro(save_){
-  if (save_){
-    const v = parseFloat(String($('obPrice').value).replace(',', '.').replace(/[^\d.]/g, ''));
-    if (Number.isFinite(v) && v > 0) OB.price = clamp(Math.round(v * 100) / 100, 0, 100);
-    const tk = dayKey(Date.now());
-    D.base.perDay = OB.perDay; D.base.price = OB.price;
-    if (D.plan.mode !== OB.mode){ D.plan.mode = OB.mode; if (OB.mode === 'quit' && !D.plan.quitDate) D.plan.quitDate = tk; }
-    if (OB.mode === 'reduce' && OB.limit !== limitFor(tk)){ D.plan.limit = OB.limit; D.plan.stepFrom = tk; }
-    D.spec.on = OB.spec;
-  }
+function finishIntro(){
+  obPriceRead();
+  const tk = dayKey(Date.now());
+  D.base.perDay = OB.perDay; D.base.price = OB.price; D.base.perPack = OB.perPack;
+  D.plan.mode = OB.mode;
+  if (OB.mode === 'quit') D.plan.quitDate = OB.quitDate || tk;
+  else if (OB.limit !== limitFor(tk)){ D.plan.limit = OB.limit; D.plan.stepFrom = tk; D.plan.weekMax = Math.max(1, OB.limit * 7); }
   D.onboarded = true; saveD(); S.introDone = true; save();
   intro.classList.add('out');
   setTimeout(()=>{ document.documentElement.classList.remove('intro-on'); intro.classList.remove('out'); intro.setAttribute('aria-hidden', 'true'); render(); heartBeat(); }, 450);
-  if (save_) setTimeout(()=>toast('C’est parti. Un jour après l’autre.'), 600);
+  setTimeout(()=>toast('C’est parti. Un jour après l’autre.'), 600);
 }
 let introT = null;
 introTrack.addEventListener('scroll', ()=>{ clearTimeout(introT); introT = setTimeout(syncIntro, 60); }, { passive:true });
-$('introNext').addEventListener('click', ()=>{ const i = introIndex(); if (i >= introDots.length - 1) finishIntro(true); else goSlide(i + 1); });
-$('introSkip').addEventListener('click', ()=>goSlide(introDots.length - 1));
+$('introNext').addEventListener('click', ()=>{
+  const i = introIndex();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  obPriceRead(); syncIntro();
+  if (i >= slides.length - 1) finishIntro(); else goSlide(i + 1);
+});
+$('introSkip').addEventListener('click', ()=>goSlide(FIRST_Q));
 $('introDots').addEventListener('click', (e)=>{ const i = introDots.indexOf(e.target); if (i >= 0) goSlide(i); });
 intro.addEventListener('click', (e)=>{
   const b = e.target.closest('button[data-ob]'); if (!b) return;
-  const d = +b.dataset.d;
-  if (b.dataset.ob === 'perDay'){ OB.perDay = clamp(OB.perDay + d, 1, 80); if (OB.limit > OB.perDay) OB.limit = OB.perDay; }
+  const d = +b.dataset.d, k = b.dataset.ob;
+  if (k === 'perDay'){ OB.perDay = clamp(OB.perDay + d, 1, 80); if (OB.limit > OB.perDay) OB.limit = OB.perDay; }
+  else if (k === 'perPack') OB.perPack = clamp(OB.perPack + d, 10, 50);
   else OB.limit = clamp(OB.limit + d, 0, OB.perDay);
   haptic(); syncIntro();
+  const v = b.parentNode.querySelector('.num'); if (v) pop(v, 'tick');
 });
-$('obMode').addEventListener('click', (e)=>{ const b = e.target.closest('button'); if (!b) return; OB.mode = b.dataset.v; syncIntro(); });
-$('obSpec').addEventListener('change', ()=>{ OB.spec = $('obSpec').checked; });
-$('obPrice').addEventListener('change', ()=>{ const v = parseFloat(String($('obPrice').value).replace(',', '.').replace(/[^\d.]/g, '')); if (Number.isFinite(v) && v > 0) OB.price = clamp(Math.round(v * 100) / 100, 0, 100); syncIntro(); });
+$('obPriceChips').addEventListener('click', (e)=>{ const c = e.target.closest('.chip'); if (!c) return; OB.price = +c.dataset.p; haptic(); syncIntro(); });
+$('obPrice').addEventListener('change', ()=>{ obPriceRead(); syncIntro(); });
+$('obPrice').addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); $('obPrice').blur(); } });
+$('obMode').addEventListener('click', (e)=>{ const b = e.target.closest('.choice'); if (!b) return; OB.mode = b.dataset.v; haptic(); syncIntro(); });
+$('obQuitDate').addEventListener('change', ()=>{ OB.quitDate = $('obQuitDate').value || dayKey(Date.now()); syncIntro(); });
 $('btnIntro').addEventListener('click', ()=>{ settingsSheet.set(false); setTimeout(showIntro, 300); });
 
 /* ---------- clavier iOS : à la fermeture, la page peut rester décalée (iOS 26/27) ---------- */
