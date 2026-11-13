@@ -12,8 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="Souffle">
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" type="image/png" href="icon-192.png?v=2">
 
 <!-- Thème posé AVANT le premier rendu (évite le flash clair → sombre) -->
 <script>
@@ -137,7 +137,7 @@ html[data-theme="dark"] .card,html[data-theme="dark"] .group{background-image:li
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- héros : le cœur ---------- */
-.hero{position:relative;width:min(74vw,290px);aspect-ratio:104/94;margin:4px auto 0}
+.hero{position:relative;width:min(74vw,290px);aspect-ratio:229/201.6;margin:4px auto 0}
 /* halo : trois nappes de couleur qui reprennent le dégradé du cœur, fondues et qui respirent avec lui */
 .aura{position:absolute;pointer-events:none;
   background:
@@ -147,14 +147,16 @@ html[data-theme="dark"] .card,html[data-theme="dark"] .group{background-image:li
   filter:blur(34px);-webkit-filter:blur(34px);transform:translateZ(0)}
 .hero .aura{inset:-34% -30% -24%;opacity:var(--aura);animation:halo 9s ease-in-out infinite;transform-origin:50% 50%}
 @keyframes halo{0%,100%{transform:scale(.94) translateZ(0);opacity:calc(var(--aura) * .8)}50%{transform:scale(1.06) translateZ(0);opacity:var(--aura)}}
-.heart{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 16px 26px rgba(150,90,80,.26))}
+.heart{position:relative;display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(-4px 14px 22px rgba(150,90,80,.28))}
 html[data-theme="dark"] .heart{filter:drop-shadow(0 20px 34px rgba(0,0,0,.55))}
 .hero .heart{animation:breatheSoft 9s ease-in-out infinite;transform-origin:50% 55%}
 @keyframes breatheSoft{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
-.hero-in{position:absolute;left:12%;right:12%;top:13%;height:52%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+/* texte centré sur le « ventre » du cœur (bande jaune), pas sous l’échancrure */
+.hero-in{position:absolute;left:16%;right:16%;top:25%;height:44%;display:flex;flex-direction:column;align-items:center;justify-content:center;
   color:var(--on-heart);text-align:center;pointer-events:none}
-.hero-n{font-size:clamp(64px,21vw,92px);font-weight:500;line-height:.95;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-.hero-l{margin-top:6px;font-size:15px;font-weight:500;opacity:.72;max-width:170px;line-height:1.2}
+.hero-n{font-size:clamp(72px,23vw,100px);font-weight:400;line-height:.86;letter-spacing:-.055em;font-variant-numeric:tabular-nums;
+  text-shadow:0 1px 0 rgba(255,255,255,.18)}
+.hero-l{margin-top:12px;font-size:13.5px;font-weight:500;letter-spacing:.01em;line-height:1.25;opacity:.62;white-space:nowrap}
 .budget{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;max-width:300px;margin:18px auto 0;min-height:4px}
 .budget i{width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--ink3)}
 .budget i.used{box-shadow:none;background:var(--coral)}
@@ -271,7 +273,7 @@ html.locked #scroll,html.locked .top,html.locked .tabbar-wrap,html.locked .toast
 .lock.out{animation:lockOut .34s cubic-bezier(.4,0,.2,1) forwards}
 @keyframes lockOut{to{opacity:0;transform:scale(1.06)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.lock-heart{width:78px;height:70px;margin-bottom:20px;overflow:visible;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5));animation:breatheSoft 5s ease-in-out infinite}
+.lock-heart{width:78px;height:69px;margin-bottom:20px;overflow:visible;filter:drop-shadow(0 10px 24px rgba(0,0,0,.5));animation:breatheSoft 5s ease-in-out infinite}
 .lock h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}
 .lock p{margin:8px 0 0;font-size:15px;color:rgba(243,239,233,.62);min-height:21px}
 .dots{display:flex;gap:18px;margin:26px 0 34px}
@@ -466,6 +468,11 @@ a.btn{text-decoration:none}
 .ghost-heart{position:fixed;margin:0;pointer-events:none;z-index:45;transform-origin:0 0;overflow:visible;will-change:transform;
   filter:drop-shadow(0 20px 36px rgba(0,0,0,.45))}
 html.fly #hero .heart,html.fly #brHeartBox .heart{opacity:0}
+/* le chiffre et sa légende accompagnent le cœur : ils s’effacent au départ et reviennent quand il se pose */
+.hero-in{transition:opacity .38s ease,transform .5s cubic-bezier(.2,.9,.3,1.15)}
+html.fly .hero-in{opacity:0;transform:scale(.86);transition:opacity .16s ease,transform .2s ease}
+.budget,.hero-sub{transition:opacity .4s ease}
+html.fly .budget,html.fly .hero-sub{opacity:0;transition:opacity .16s ease}
 .breathe.open .br-top{animation:riseIn .6s .25s cubic-bezier(.2,.8,.2,1) both}
 .breathe.open .br-hint{animation:riseIn .7s .35s cubic-bezier(.2,.8,.2,1) both}
 .breathe.open .br-reason{animation:riseIn .7s .45s cubic-bezier(.2,.8,.2,1) both}
@@ -479,7 +486,7 @@ html.fly #hero .heart,html.fly #brHeartBox .heart{opacity:0}
 .br-top{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;min-height:48px}
 .br-top span{font-size:15px;color:rgba(243,239,233,.55);font-variant-numeric:tabular-nums}
 .br-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:0}
-.br-heart{position:relative;width:min(68vw,300px,42vh);aspect-ratio:104/94}
+.br-heart{position:relative;width:min(68vw,300px,42vh);aspect-ratio:229/201.6}
 .br-heart .aura{inset:-38%;opacity:.7;transform:scale(.72)}
 .br-heart .heart{transform:scale(.72);transform-origin:50% 52%;filter:drop-shadow(0 24px 40px rgba(0,0,0,.6))}
 .breathe.run .br-heart .heart,.breathe.run .br-heart .aura{animation:breathe 10s ease-in-out infinite}
@@ -620,13 +627,10 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
 <!-- dégradés partagés (cœur, graphique) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
-    <!-- radial Figma : centre en haut au milieu ; couleurs telles que rendues par l'effet verre de l'icône -->
-    <radialGradient id="gHeart" cx=".5" cy="0" r="1" fx=".5" fy="0">
-      <stop offset="0" stop-color="#a6c3da"/><stop offset=".11" stop-color="#a9c5d6"/><stop offset=".23" stop-color="#b1c7c5"/>
-      <stop offset=".34" stop-color="#b8ccc1"/><stop offset=".42" stop-color="#d0d7a8"/><stop offset=".51" stop-color="#f3e78c"/>
-      <stop offset=".57" stop-color="#f3da87"/><stop offset=".63" stop-color="#f0c983"/><stop offset=".69" stop-color="#eaad7d"/>
-      <stop offset=".74" stop-color="#e39378"/><stop offset=".83" stop-color="#d98b72"/><stop offset=".91" stop-color="#c47c66"/>
-      <stop offset=".97" stop-color="#ae6858"/><stop offset="1" stop-color="#a45d50"/>
+    <!-- radial de l’icône V2 (Figma) : centre au-dessus du cœur, ellipse 291 × 255 -->
+    <radialGradient id="gHeart" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(126.4 -29.305) rotate(90) scale(254.914 291.33)">
+      <stop offset=".106" stop-color="#7fb3f2"/><stop offset=".226" stop-color="#8cb7e3"/><stop offset=".514" stop-color="#fff189"/>
+      <stop offset=".731" stop-color="#e07575"/><stop offset="1" stop-color="#5a2626"/>
     </radialGradient>
     <radialGradient id="gShine" cx=".3" cy=".16" r=".6">
       <stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset=".55" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
@@ -634,7 +638,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
     <linearGradient id="gShade" x1="0" y1="0" x2="0" y2="1">
       <stop offset=".7" stop-color="#320c0c" stop-opacity="0"/><stop offset="1" stop-color="#320c0c" stop-opacity=".14"/>
     </linearGradient>
-    <path id="heartPath" d="M50 89.4L7.82 46.42A27.3 27.3 0 1 1 50 12.13A27.3 27.3 0 1 1 92.18 46.42Z"/>
+    <path id="heartPath" d="M119.984 25.4682L126.4 34.3223L132.816 25.4682C143.509 10.6685 160.704 1.89999 178.969 1.89999C210.407 1.89999 235.9 27.393 235.9 58.8314V59.9435C235.9 107.935 176.06 163.669 144.835 187.494C139.531 191.515 133.03 193.525 126.4 193.525C119.77 193.525 113.226 191.557 107.965 187.494C76.74 163.669 16.9 107.935 16.9 59.9435V58.8314C16.9 27.393 42.393 1.89999 73.8314 1.89999C92.0957 1.89999 109.291 10.6685 119.984 25.4682Z"/>
   </defs>
 </svg>
 
@@ -648,7 +652,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       <div class="vis">
         <div class="v-halo"></div>
         <div class="v-sparks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <svg class="v-heart big" viewBox="-2 -2 104 94" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7" stroke-linejoin="round"/></svg>
+        <svg class="v-heart big" viewBox="11.9 -3.1 229 201.6" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/></svg>
       </div>
       <h2>Bienvenue sur Souffle</h2>
       <p>Réduire ou arrêter la cigarette, à ton rythme et sans culpabilité. Tout reste sur ton téléphone.</p>
@@ -657,7 +661,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       <div class="vis">
         <div class="v-halo"></div>
         <div class="v-phone">
-          <svg class="v-heart mid" viewBox="-2 -2 104 94" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7" stroke-linejoin="round"/></svg>
+          <svg class="v-heart mid" viewBox="11.9 -3.1 229 201.6" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/></svg>
           <div class="v-num">2</div>
           <div class="v-dots"><i class="on"></i><i class="on"></i><i></i></div>
           <div class="v-btns"><span class="v-b acc">J’ai une envie</span><span class="v-b">J’en fume une</span></div>
@@ -669,7 +673,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
     <article class="slide">
       <div class="vis">
         <div class="v-ring r1"></div><div class="v-ring r2"></div><div class="v-ring r3"></div>
-        <svg class="v-heart breathe-demo" viewBox="-2 -2 104 94" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7" stroke-linejoin="round"/></svg>
+        <svg class="v-heart breathe-demo" viewBox="11.9 -3.1 229 201.6" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/></svg>
         <div class="v-word">Inspire</div>
       </div>
       <h2>Une envie ? On respire.</h2>
@@ -712,7 +716,7 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       <div id="obQuit" hidden><div class="q-sub">Date d’arrêt</div><input class="inp date ob-date" type="date" id="obQuitDate" aria-label="Date d’arrêt"></div>
     </article>
     <article class="slide q">
-      <div class="vis small"><div class="v-halo"></div><svg class="v-heart big" viewBox="-2 -2 104 94" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".7" stroke-linejoin="round"/></svg></div>
+      <div class="vis small"><div class="v-halo"></div><svg class="v-heart big" viewBox="11.9 -3.1 229 201.6" aria-hidden="true"><use href="#heartPath" fill="url(#gHeart)"/></svg></div>
       <h2>Ton plan est prêt</h2>
       <div class="sum" id="obSum"></div>
     </article>
@@ -725,9 +729,8 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
 
 <!-- verrouillage -->
 <section class="lock" id="lock" role="dialog" aria-modal="true" aria-label="Souffle est verrouillé">
-  <svg class="lock-heart" viewBox="-2 -2 104 94" aria-hidden="true">
-    <use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/>
-    <use href="#heartPath" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".8" stroke-linejoin="round"/>
+  <svg class="lock-heart" viewBox="11.9 -3.1 229 201.6" aria-hidden="true">
+    <use href="#heartPath" fill="url(#gHeart)"/>
   </svg>
   <h2 id="lockTitle">Souffle est verrouillé</h2>
   <p id="lockSub">Entre ton code</p>
@@ -769,9 +772,8 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
 
     <div class="hero" id="hero">
       <div class="aura" aria-hidden="true"></div>
-      <svg class="heart" viewBox="-2 -2 104 94" aria-hidden="true">
-        <use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="url(#gShade)"/>
-        <use href="#heartPath" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".6" stroke-linejoin="round"/>
+      <svg class="heart" viewBox="11.9 -3.1 229 201.6" aria-hidden="true">
+        <use href="#heartPath" fill="url(#gHeart)"/>
       </svg>
       <div class="hero-in" aria-live="polite"><div class="hero-n" id="heroN">0</div><div class="hero-l" id="heroL">aujourd’hui</div></div>
     </div>
@@ -1051,9 +1053,8 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
   <div class="br-stage">
     <div class="br-heart" id="brHeartBox">
       <div class="aura" aria-hidden="true"></div>
-      <svg class="heart" viewBox="-2 -2 104 94" aria-hidden="true">
-        <use href="#heartPath" fill="url(#gHeart)"/><use href="#heartPath" fill="url(#gShine)"/><use href="#heartPath" fill="url(#gShade)"/>
-        <use href="#heartPath" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".6" stroke-linejoin="round"/>
+      <svg class="heart" viewBox="11.9 -3.1 229 201.6" aria-hidden="true">
+        <use href="#heartPath" fill="url(#gHeart)"/>
       </svg>
     </div>
     <div class="br-phase" id="brPhase" aria-live="polite">Inspire</div>
@@ -1162,11 +1163,21 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
 (function(){
 'use strict';
 
-const APP_VERSION = '1.7.2';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.8.2';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.8.2', date:'13 novembre 2026', items:[
+    'Retour de la respiration : le chiffre et sa légende reviennent en fondu avec le cœur, sans saut'
+  ]},
+  { v:'1.8.1', date:'13 novembre 2026', items:[
+    'Chiffre et légende recentrés sur le nouveau cœur, typographie affinée'
+  ]},
+  { v:'1.8.0', date:'10 novembre 2026', items:[
+    'Nouvelle icône, et le nouveau cœur partout dans l’app (accueil, respiration, verrouillage, présentation)',
+    'Dégradé du cœur repris à l’identique de l’icône'
+  ]},
   { v:'1.7.2', date:'10 novembre 2026', items:[
     'Les « spéciales » s’appellent désormais « Autres »',
     'Présentation : la question sur les autres est retirée (l’option reste dans Plan)'
