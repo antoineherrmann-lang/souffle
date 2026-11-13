@@ -328,6 +328,40 @@ html.locked #scroll,html.locked .top,html.locked .tabbar-wrap,html.locked .toast
 .sp-v,.goal-amt{transition:color .3s}
 .welcome:not([hidden]){animation:cardIn .5s ease both}
 
+/* bilan, calendrier, intervalle */
+.recap{padding-left:24px}
+.recap .goal-for b{color:var(--ink);font-weight:600}
+.rc{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:11px 0;font-size:15px;line-height:1.35}
+.rc:first-of-type{margin-top:14px}
+.rc+.rc{box-shadow:0 -.5px 0 var(--hair)}
+.rc span{color:var(--ink2);flex:none}
+.rc b{font-weight:500;text-align:right}
+.rc b.good{color:var(--ok)}
+.recap-next{margin-top:14px;padding-top:14px;box-shadow:0 -.5px 0 var(--hair);font-size:15.5px;line-height:1.45}
+.recap-hint{display:flex;align-items:center;gap:14px;padding:14px 14px 14px 20px}
+.recap-hint:not([hidden]){animation:cardIn .5s ease both}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cal-title{font-size:18px;font-weight:600}
+.cal-dow,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{margin-top:14px;font-size:12px;color:var(--ink3);text-align:center}
+.cal-grid{margin-top:8px}
+.cal-d{position:relative;aspect-ratio:1;border:0;border-radius:12px;padding:0;background:var(--fill);font:500 13.5px/1 var(--font);color:var(--ink3);
+  display:grid;place-items:center;cursor:pointer;font-variant-numeric:tabular-nums;transition:transform .12s}
+.cal-d.on{color:#2b2421;animation:dotPop .4s cubic-bezier(.2,.9,.3,1.2) both}
+.cal-d.on:active{transform:scale(.9)}
+.cal-d.on.deep{color:#fff}
+.cal-d.fut{background:none;box-shadow:inset 0 0 0 1px var(--hair);cursor:default}
+.cal-d.pre{background:none;cursor:default;opacity:.45}
+.cal-d.today{box-shadow:0 0 0 2px var(--bg-b),0 0 0 4px var(--ink)}
+html[data-theme="dark"] .cal-d.today{box-shadow:0 0 0 2px #232323,0 0 0 4px #f2efea}
+.cal-d .sp{position:absolute;right:4px;top:4px;width:6px;height:6px;border-radius:50%;background:var(--spec);box-shadow:0 0 0 1.5px rgba(255,255,255,.75)}
+.cal-legend{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:12px;color:var(--ink2)}
+.cal-legend i{flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#8cb7e3,#c4d2b1,#fff189,#edba81,#e07575,#964646)}
+.cal-sum{margin:12px 0 0;font-size:14.5px;line-height:1.45;color:var(--ink2)}
+.gap-chart{height:96px;margin-top:16px}
+.gap-chart svg{display:block;width:100%;height:100%;overflow:visible;font-family:var(--font)}
+.gap-chart rect.cb{transform-box:fill-box;transform-origin:50% 100%;animation:grow .6s cubic-bezier(.2,.9,.3,1.1) both}
+
 /* repousser / autres / cagnotte */
 .duo2{display:flex;gap:10px;margin-top:10px}
 .duo2 .btn{flex:1;min-width:0}
@@ -808,6 +842,11 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       <div class="next" id="nextBox"><p id="nextT"></p><div class="bar"><i id="nextBar"></i></div></div>
     </div>
 
+    <div class="card recap-hint" id="recapHint" hidden>
+      <div class="row-l"><div class="row-t">Ton bilan de la semaine est prêt</div><div class="row-s" id="recapHintS"></div></div>
+      <button class="btn primary" id="btnRecapHint">Voir</button>
+    </div>
+
     <div class="card trait spend" id="spendCard">
       <div class="spend-h">Dépensé en fumant</div>
       <div class="spend-grid">
@@ -840,6 +879,34 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
       <div class="legend"><span><i></i>ton objectif</span><span><i class="dash"></i>avant Souffle</span></div>
     </div>
     <p class="lead" id="progLead"></p>
+
+    <h2 class="sec" id="recapTitle">Bilan de la semaine</h2>
+    <div class="card trait recap" id="recapCard">
+      <div id="recap"></div>
+      <div class="acts"><button class="btn primary" id="btnRecapGoal" hidden>Adopter</button></div>
+    </div>
+
+    <h2 class="sec">Calendrier</h2>
+    <div class="card cal">
+      <div class="cal-head">
+        <div class="cal-title" id="calTitle"></div>
+        <div class="day-nav">
+          <button class="btn ib" id="calPrev" data-glass-icon aria-label="Mois précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg></button>
+          <button class="btn ib" id="calNext" data-glass-icon aria-label="Mois suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></button>
+        </div>
+      </div>
+      <div class="cal-dow" aria-hidden="true"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend" aria-hidden="true"><span>0</span><i></i><span id="calMax"></span></div>
+      <p class="cal-sum" id="calSum"></p>
+    </div>
+
+    <h2 class="sec">Entre deux cigarettes</h2>
+    <div class="card" id="gapCard">
+      <div class="goal-amt" id="gapAvg">—</div>
+      <div class="goal-for" id="gapTxt"></div>
+      <div class="gap-chart" id="gapChart"></div>
+    </div>
 
     <h2 class="sec">Ta cagnotte</h2>
     <p class="sec-sub">L’argent que tu ne dépenses plus en tabac. Fixe-toi un objectif pour te faire plaisir.</p>
@@ -1163,11 +1230,16 @@ html[data-theme="dark"] .tabbar-wrap .dg-host::after,html[data-theme="dark"] .se
 (function(){
 'use strict';
 
-const APP_VERSION = '1.8.2';          // ← à changer à chaque version (et VERSION dans sw.js)
+const APP_VERSION = '1.9.0';          // ← à changer à chaque version (et VERSION dans sw.js)
 const SETTINGS_KEY = 'souffle.settings', DATA_KEY = 'souffle.data';
 
 /* ---------- nouveautés (la plus récente en premier) ---------- */
 const CHANGELOG = [
+  { v:'1.9.0', date:'13 novembre 2026', items:[
+    'Calendrier en dégradé : chaque jour prend une couleur du cœur, du bleu (aucune cigarette) au corail',
+    'Bilan de la semaine : total, meilleure journée, déclencheur principal, comparaison et objectif proposé',
+    'Intervalle moyen entre deux cigarettes, avec son évolution sur six semaines'
+  ]},
   { v:'1.8.2', date:'13 novembre 2026', items:[
     'Retour de la respiration : le chiffre et sa légende reviennent en fondu avec le cœur, sans saut'
   ]},
@@ -1654,7 +1726,10 @@ function renderToday(st){
   if (st.last == null) ss = 'Note chaque cigarette pour suivre tes pauses.';
   else if (st.gap >= st.record - MIN && st.gap > HOUR) ss = 'C’est ta plus longue pause depuis le début. Continue !';
   else ss = 'Ta plus longue pause : ' + fmtDur(st.record) + '.';
+  const ag = avgGap(st.now - 7 * DAY, st.now + 1);
+  if (ag != null && st.last != null) ss += st.gap > ag ? ' Déjà plus que ton intervalle moyen (' + fmtDur(ag) + ').' : ' Intervalle moyen : ' + fmtDur(ag) + '.';
   setText($('sinceS'), ss);
+  renderRecapHint(st);
   const ix = HEALTH.findIndex(x=>x.ms > st.gap);
   setHidden($('nextBox'), ix < 0);
   if (ix >= 0){
@@ -1711,6 +1786,7 @@ function renderProgress(st){
   for (let i = N - 1; i >= 0; i--){ const k = dayKey(addDays(dayStart(st.now), -i)); keys.push(k); vals.push(st.counts[k] || 0); lims.push(limitFor(k)); }
   drawChart($('chart'), keys, vals, lims, D.base.perDay, st.todayK, dayKey(D.since));
   renderGoal(st);
+  renderRecap(st); renderCal(st); renderGap(st);
 
   /* phrase de synthèse sur la période (jours depuis l’installation seulement) */
   const startK = dayKey(D.since), inRange = keys.map((k, i)=>({ k, v:vals[i] })).filter(x=>x.k >= startK);
@@ -2037,6 +2113,165 @@ $('btnDelayDone').addEventListener('click', ()=>{ D.delay = null; saveD(); rende
 $('btnDelayStop').addEventListener('click', ()=>{ D.delay = null; saveD(); renderDelay(); });
 $('btnDelaySmoke').addEventListener('click', ()=>{ D.delay = null; saveD(); renderDelay(); logSmoke(); });
 
+
+/* ---------- bilan de la semaine ---------- */
+/* le dimanche : la semaine qui se termine ; les autres jours : la dernière semaine complète */
+function recapWeek(now){
+  const ws = weekStart(now), sunday = new Date(now).getDay() === 0;
+  const start = sunday ? ws : addDays(ws, -7), end = addDays(start, 7);
+  return { start, end, sunday, ok:end > D.since && start <= now };
+}
+function weekData(start, end, now){
+  const logs = D.logs.filter(l=>l.t >= start && l.t < end), days = [];
+  for (let i = 0; i < 7; i++){
+    const d0 = addDays(start, i), d1 = addDays(d0, 1);
+    if (d1 <= D.since || d0 > now) continue;   // jours non suivis
+    days.push({ t:d0, n:logs.filter(l=>l.t >= d0 && l.t < d1).length });
+  }
+  const tc = {}; logs.forEach(l=>{ if (l.k) tc[l.k] = (tc[l.k] || 0) + 1; });
+  const top = Object.keys(tc).sort((a,b)=>tc[b] - tc[a])[0];
+  return { total:logs.length, days, top, topN:top ? tc[top] : 0,
+    wins:countIn(D.cravings, start, end) + countIn(D.delays, start, end), others:countIn(D.specials, start, end) };
+}
+let recapProposal = null;
+function renderRecap(st){
+  const w = recapWeek(st.now), box = $('recap'), btn = $('btnRecapGoal');
+  setText($('recapTitle'), w.sunday ? 'Bilan du dimanche' : 'Bilan de la semaine');
+  recapProposal = null;
+  if (!w.ok){
+    setHTML(box, '<div class="goal-for" style="margin-top:0">Ton premier bilan arrivera dimanche : total de la semaine, meilleure journée, déclencheur principal et un objectif pour la suivante.</div>');
+    setHidden(btn, true); return;
+  }
+  const d = weekData(w.start, w.end, st.now), unit = D.base.price / D.base.perPack, wm = D.plan.weekMax;
+  const prevOk = w.start > D.since, prev = prevOk ? weekData(addDays(w.start, -7), w.start, st.now) : null;
+  const range = 'du ' + fmtDay(w.start, { day:'numeric', month:addDays(w.end, -1) && new Date(w.start).getMonth() === new Date(addDays(w.end, -1)).getMonth() ? undefined : 'long' }) + ' au ' + fmtDay(addDays(w.end, -1));
+  let h = '<div class="goal-amt">' + d.total + ' <span style="font-size:18px;font-weight:500;letter-spacing:0;color:var(--ink2)">' + pl(d.total, 'cigarette', 'cigarettes') + '</span></div>';
+  h += '<div class="goal-for">Semaine ' + range + (D.plan.weekOn ? ', pour un maximum de <b>' + wm + '</b>' : '') + (d.days.length < 7 ? ' (' + d.days.length + ' ' + pl(d.days.length, 'jour suivi', 'jours suivis') + ')' : '') + '.</div>';
+  const rows = [];
+  if (d.days.length){
+    const best = d.days.slice().sort((a,b)=>a.n - b.n || a.t - b.t)[0];
+    rows.push(['Meilleure journée', cap(fmtDay(best.t, { weekday:'long' })) + ', ' + (best.n ? best.n + ' ' + pl(best.n, 'cigarette', 'cigarettes') : 'aucune cigarette'), best.n === 0]);
+  }
+  if (d.top) rows.push(['Déclencheur principal', TRIG_L[d.top] + ' (' + d.topN + ' fois)']);
+  if (prev){ const diff = d.total - prev.total; rows.push(['Semaine d’avant', diff === 0 ? 'Autant (' + prev.total + ')' : Math.abs(diff) + ' de ' + (diff < 0 ? 'moins' : 'plus') + ' (' + prev.total + ')', diff < 0]); }
+  if (d.wins) rows.push(['Envies surmontées ou repoussées', String(d.wins), true]);
+  rows.push(['Dépensé en tabac', fmtEur(d.total * unit)]);
+  if (D.spec.on && d.others) rows.push(['Autres', String(d.others)]);
+  h += rows.map(r=>'<div class="rc"><span>' + r[0] + '</span><b' + (r[2] ? ' class="good"' : '') + '>' + esc(r[1]) + '</b></div>').join('');
+  /* objectif proposé pour la suite */
+  let next, prop = null;
+  if (D.plan.mode === 'quit') next = d.total === 0 ? 'Une semaine entière sans fumer. Continue exactement comme ça.' : 'Tu vises l’arrêt : repère dans ton calendrier les jours sans, et allonge la série.';
+  else if (d.total > wm){ next = 'Au-dessus de ton maximum cette fois. Garde <b>' + wm + ' par semaine</b> comme objectif, tu y es presque.'; }
+  else { prop = Math.max(0, Math.min(wm, d.total) - 1);
+    next = d.total === 0 ? 'Aucune cigarette de la semaine. Et si c’était le moment de passer à l’arrêt ?' : 'Sous ton maximum, bravo. Pour la suivante, je te propose <b>' + prop + ' par semaine</b>.';
+    if (d.total === 0 || prop === wm) prop = null; }
+  h += '<div class="recap-next">' + next + '</div>';
+  setHTML(box, h);
+  recapProposal = prop;
+  setHidden(btn, prop == null);
+  if (prop != null) setText(btn, 'Adopter ' + prop + ' par semaine');
+  /* bilan vu : on retire le rappel de l’accueil */
+  const key = dayKey(w.start);
+  if (S.recapSeen !== key){ S.recapSeen = key; save(); }
+}
+$('btnRecapGoal').addEventListener('click', ()=>{
+  if (recapProposal == null) return;
+  D.plan.weekOn = true; D.plan.weekMax = recapProposal; saveD(); haptic(); render();
+  toast('Objectif de la semaine : ' + D.plan.weekMax + '. Tu peux le changer dans Plan.');
+});
+function renderRecapHint(st){
+  const w = recapWeek(st.now), dow = new Date(st.now).getDay();
+  const show = w.ok && (dow === 0 || dow === 1) && S.recapSeen !== dayKey(w.start) && D.logs.length + D.cravings.length > 0;
+  setHidden($('recapHint'), !show);
+  if (show) setText($('recapHintS'), 'Semaine du ' + fmtDay(w.start) + ' : total, meilleure journée et objectif pour la suite.');
+}
+$('btnRecapHint').addEventListener('click', ()=>{
+  showTab(1);
+  setTimeout(()=>{ try { $('recapTitle').scrollIntoView({ behavior:'smooth', block:'start' }); } catch(e){} }, 120);
+});
+
+/* ---------- calendrier en dégradé ---------- */
+const CAL_STOPS = [[140,183,227],[196,210,177],[255,241,137],[237,186,129],[224,117,117],[150,70,70]];
+function calColor(t){
+  t = clamp(t, 0, 1) * (CAL_STOPS.length - 1);
+  const i = Math.min(CAL_STOPS.length - 2, Math.floor(t)), f = t - i, a = CAL_STOPS[i], b = CAL_STOPS[i + 1];
+  return 'rgb(' + [0,1,2].map(k=>Math.round(a[k] + (b[k] - a[k]) * f)).join(',') + ')';
+}
+let calOff = 0;   // 0 = mois en cours, -1 = mois précédent…
+function renderCal(st){
+  const now = new Date(st.now), first = new Date(now.getFullYear(), now.getMonth() + calOff, 1);
+  const y = first.getFullYear(), m = first.getMonth(), nDays = new Date(y, m + 1, 0).getDate(), lead = (first.getDay() + 6) % 7;
+  const sinceK = dayKey(D.since), minMonth = new Date(D.since); 
+  setText($('calTitle'), cap(first.toLocaleDateString('fr-FR', { month:'long', year:'numeric' })));
+  const prevOff = y < minMonth.getFullYear() || (y === minMonth.getFullYear() && m <= minMonth.getMonth());
+  if ($('calPrev').disabled !== prevOff) $('calPrev').disabled = prevOff;
+  if ($('calNext').disabled !== (calOff >= 0)) $('calNext').disabled = calOff >= 0;
+  const ref = Math.max(1, D.base.perDay) * 1.25, spDays = {};
+  if (D.spec.on) D.specials.forEach(t=>{ spDays[dayKey(t)] = 1; });
+  let h = '', zero = 0, under = 0, total = 0, tracked = 0;
+  for (let i = 0; i < lead; i++) h += '<span></span>';
+  for (let d = 1; d <= nDays; d++){
+    const k = y + '-' + pad(m + 1) + '-' + pad(d), n = st.counts[k] || 0;
+    if (k > st.todayK) h += '<span class="cal-d fut">' + d + '</span>';
+    else if (k < sinceK) h += '<span class="cal-d pre">' + d + '</span>';
+    else {
+      tracked++; total += n; if (!n) zero++; if (n <= limitFor(k)) under++;
+      const tt = n ? Math.max(0.14, n / ref) : 0;
+      h += '<button class="cal-d on' + (tt > 0.88 ? ' deep' : '') + (k === st.todayK ? ' today' : '') + '" data-day="' + k + '" style="background:' + calColor(tt) + ';animation-delay:' + (d * 9) + 'ms" aria-label="' +
+        d + ' ' + first.toLocaleDateString('fr-FR', { month:'long' }) + ' : ' + (n ? n + ' ' + pl(n, 'cigarette', 'cigarettes') : 'aucune cigarette') + '">' + d + (spDays[k] ? '<i class="sp"></i>' : '') + '</button>';
+    }
+  }
+  setHTML($('calGrid'), h);
+  setText($('calMax'), Math.ceil(ref) + ' et plus');
+  setText($('calSum'), tracked ? total + ' ' + pl(total, 'cigarette', 'cigarettes') + ' sur ' + tracked + ' ' + pl(tracked, 'jour suivi', 'jours suivis') + ' : ' +
+    zero + ' ' + pl(zero, 'jour', 'jours') + ' sans cigarette, ' + under + ' sous ton objectif. Touche un jour pour voir son détail.' : 'Aucun jour suivi ce mois-là.');
+}
+$('calPrev').addEventListener('click', ()=>{ calOff--; render(); });
+$('calNext').addEventListener('click', ()=>{ calOff = Math.min(0, calOff + 1); render(); });
+$('calGrid').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-day]'); if (!b) return;
+  viewDay = daysBetween(dayKey(Date.now()), b.dataset.day);
+  showTab(0);
+  setTimeout(()=>{ try { $('dayTitle').scrollIntoView({ behavior:'smooth', block:'center' }); } catch(e){} pop($('todayList'), 'from-l'); }, 140);
+});
+
+/* ---------- intervalle moyen entre deux cigarettes ---------- */
+function avgGap(from, to){
+  const t = D.logs.filter(l=>l.t >= from && l.t < to).map(l=>l.t);
+  if (t.length < 2) return null;
+  return (t[t.length - 1] - t[0]) / (t.length - 1);
+}
+function renderGap(st){
+  const now = st.now, W = 7 * DAY, cur = avgGap(now - W, now + 1), prev = avgGap(now - 2 * W, now - W);
+  setText($('gapAvg'), cur == null ? '—' : fmtDur(cur));
+  let t;
+  if (cur == null) t = 'Il faut au moins deux cigarettes notées sur 7 jours pour calculer ton intervalle moyen.';
+  else {
+    t = 'En moyenne entre deux cigarettes sur les 7 derniers jours, nuits comprises.';
+    if (prev != null){ const d = cur - prev;
+      t += Math.abs(d) < 10 * MIN ? ' Stable par rapport à la semaine d’avant (' + fmtDur(prev) + ').'
+        : d > 0 ? ' C’est ' + fmtDur(d) + ' de plus que la semaine d’avant (' + fmtDur(prev) + ') : tu espaces davantage.'
+        : ' C’est ' + fmtDur(-d) + ' de moins que la semaine d’avant (' + fmtDur(prev) + ').'; }
+  }
+  setText($('gapTxt'), t);
+  /* six fenêtres de 7 jours, la plus récente à droite */
+  const vals = []; for (let i = 5; i >= 0; i--) vals.push(avgGap(now - (i + 1) * W, now - i * W + (i === 0 ? 1 : 0)));
+  const el = $('gapChart'), have = vals.filter(v=>v != null);
+  setHidden(el, have.length < 2);
+  if (have.length < 2) return;
+  const Wd = Math.max(240, el.clientWidth || 300), H = 96, pb = 18, pt = 16, mx = Math.max.apply(null, have) * 1.08, slot = Wd / 6, bw = Math.min(34, slot * 0.5);
+  let g = '<svg viewBox="0 0 ' + Wd + ' ' + H + '" role="img" aria-label="Intervalle moyen par semaine"><defs><linearGradient id="gGap" gradientUnits="userSpaceOnUse" x1="0" y1="' + (H - pb) + '" x2="0" y2="' + pt + '">' +
+    '<stop offset="0" stop-color="#e07575"/><stop offset=".45" stop-color="#fff189"/><stop offset="1" stop-color="#8cb7e3"/></linearGradient></defs>';
+  vals.forEach((v, i)=>{
+    const cx = slot * (i + 0.5), last = i === 5;
+    if (v != null){ const hh = Math.max(4, (H - pb - pt) * v / mx), yy = H - pb - hh;
+      g += '<rect class="cb" style="animation-delay:' + i * 50 + 'ms" x="' + (cx - bw / 2).toFixed(1) + '" y="' + yy.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="' + Math.min(8, bw / 2) + '" fill="url(#gGap)"' + (last ? '' : ' opacity=".8"') + '/>';
+      if (last) g += '<text x="' + cx.toFixed(1) + '" y="' + (yy - 5).toFixed(1) + '" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--ink)">' + fmtDur(v) + '</text>'; }
+    else g += '<circle cx="' + cx.toFixed(1) + '" cy="' + (H - pb - 3) + '" r="2.5" fill="var(--ink3)"/>';
+    g += '<text x="' + cx.toFixed(1) + '" y="' + (H - 3) + '" text-anchor="middle" font-size="11" ' + (last ? 'font-weight="700" fill="var(--ink)"' : 'fill="var(--ink2)"') + '>' + (last ? '7 j' : 'S-' + (5 - i)) + '</text>';
+  });
+  setHTML(el, g + '</svg>');
+}
 
 /* ---------- cagnotte ---------- */
 let goalEditing = false;
